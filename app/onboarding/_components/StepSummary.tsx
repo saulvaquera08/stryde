@@ -83,6 +83,7 @@ export default function StepSummary({ data, onBack, onSubmit, isPending }: Props
         </p>
 
         <div className="bg-[#141414] border border-[#222222] rounded-2xl px-5 py-1 mb-5">
+          <Row label="Nombre"        value={`${data.first_name} ${data.last_name}`} />
           <Row label="Objetivos"     value={goalsText} />
           <Row label="Nivel"         value={LEVEL_LABELS[data.level] ?? data.level} />
           <Row label="Días / semana" value={`${data.available_days} días de entrenamiento`} />

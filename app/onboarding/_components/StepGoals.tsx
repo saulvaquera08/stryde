@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 import type { OnboardingData, GoalType } from '../types'
 
 const GOALS: { type: GoalType; label: string; emoji: string; hasDate: boolean }[] = [
@@ -16,9 +16,10 @@ interface Props {
   data: OnboardingData
   onChange: (data: OnboardingData) => void
   onNext: () => void
+  onBack: () => void
 }
 
-export default function StepGoals({ data, onChange, onNext }: Props) {
+export default function StepGoals({ data, onChange, onNext, onBack }: Props) {
   const toggleGoal = (type: GoalType) => {
     const exists = data.goals.find(g => g.type === type)
     if (exists) {
@@ -98,14 +99,21 @@ export default function StepGoals({ data, onChange, onNext }: Props) {
         </div>
       </div>
 
-      <button
-        onClick={onNext}
-        disabled={!canContinue}
-        className="w-full bg-[#C8FF00] text-black font-bold py-4 rounded-xl mt-8 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-      >
-        Continuar
-        <ChevronRight size={18} />
-      </button>
+      <div className="flex gap-3 mt-8">
+        <button
+          onClick={onBack}
+          className="flex items-center justify-center w-14 py-4 rounded-xl border border-[#222222] text-[#888888] hover:border-[#444444] transition-colors active:scale-95"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          onClick={onNext}
+          disabled={!canContinue}
+          className="flex-1 bg-[#C8FF00] text-black font-bold py-4 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+        >
+          Continuar <ChevronRight size={18} />
+        </button>
+      </div>
     </div>
   )
 }

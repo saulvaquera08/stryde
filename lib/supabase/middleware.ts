@@ -33,18 +33,20 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
-  const isOnboarding = pathname.startsWith("/onboarding");
-  const isPublic = isAuthRoute || pathname.startsWith("/auth/callback");
+  const isPublic    = isAuthRoute || pathname.startsWith("/auth/");
 
+  // Unauthenticated → protect all non-public routes
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
+  // Authenticated on login/signup → send to dashboard
+  // (onboarding_completed check happens inside the dashboard layout)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/today";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

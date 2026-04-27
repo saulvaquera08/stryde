@@ -8,6 +8,8 @@ export interface GoalSelection {
 }
 
 export interface OnboardingData {
+  first_name: string
+  last_name: string
   goals: GoalSelection[]
   level: LevelType | ''
   available_days: number

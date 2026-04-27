@@ -28,6 +28,8 @@ export type Database = {
       users: {
         Row: {
           id: string
+          first_name: string | null
+          last_name: string | null
           age: number | null
           weight: number | null
           height: number | null
@@ -37,10 +39,13 @@ export type Database = {
           injuries: string[] | null
           current_5k_time: string | null
           current_10k_time: string | null
+          onboarding_completed: boolean
           created_at: string
         }
         Insert: {
           id: string
+          first_name?: string | null
+          last_name?: string | null
           age?: number | null
           weight?: number | null
           height?: number | null
@@ -50,10 +55,13 @@ export type Database = {
           injuries?: string[] | null
           current_5k_time?: string | null
           current_10k_time?: string | null
+          onboarding_completed?: boolean
           created_at?: string
         }
         Update: {
           id?: string
+          first_name?: string | null
+          last_name?: string | null
           age?: number | null
           weight?: number | null
           height?: number | null
@@ -63,6 +71,7 @@ export type Database = {
           injuries?: string[] | null
           current_5k_time?: string | null
           current_10k_time?: string | null
+          onboarding_completed?: boolean
           created_at?: string
         }
         Relationships: []
@@ -193,6 +202,27 @@ export type Database = {
           rating?: number | null
           notes?: string | null
           metrics?: Record<string, unknown>
+        }
+        Relationships: []
+      }
+      coach_messages: {
+        Row: {
+          id: string
+          user_id: string
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          message: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          message?: string
+          created_at?: string
         }
         Relationships: []
       }

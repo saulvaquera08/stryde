@@ -15,6 +15,8 @@ export async function saveOnboarding(data: OnboardingData) {
   const { error: profileErr } = await supabase
     .from('users')
     .update({
+      first_name:       data.first_name.trim() || null,
+      last_name:        data.last_name.trim()  || null,
       age:              data.age     ? parseInt(data.age)       : null,
       weight:           data.weight  ? parseFloat(data.weight)  : null,
       height:           data.height  ? parseFloat(data.height)  : null,
@@ -66,6 +68,12 @@ export async function saveOnboarding(data: OnboardingData) {
     .insert(workoutsData.map(w => ({ ...w, plan_id: plan.id })))
 
   if (workoutsErr) throw new Error(workoutsErr.message)
+
+  // ── 6. Mark onboarding as done ────────────────────────────────────────────
+  await supabase
+    .from('users')
+    .update({ onboarding_completed: true })
+    .eq('id', user.id)
 
   redirect('/dashboard')
 }
