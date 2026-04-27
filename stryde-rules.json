@@ -1,0 +1,116 @@
+[{
+  "philosophy": [
+    "Never sacrifice motor (cardio base)",
+    "Strength = performance, not aesthetics",
+    "Train as you compete: run + fatigue",
+    "No more than 2 consecutive high intensity days",
+    "Always maintain aerobic base (Z2)"
+  ],
+  "weekly_structure": {
+    "day_1": {
+      "label": "Strength Lower + Intervals",
+      "blocks": ["lower_heavy", "explosive_power", "short_intervals"],
+      "intensity": "high",
+      "goal": "Power + lactate tolerance"
+    },
+    "day_2": {
+      "label": "Z2 Run + Accessory",
+      "blocks": ["zone2_run", "core", "mobility"],
+      "intensity": "low",
+      "goal": "Aerobic base + active recovery"
+    },
+    "day_3": {
+      "label": "HYROX Simulation",
+      "blocks": ["run_sled", "run_burpees", "run_lunges"],
+      "intensity": "high",
+      "goal": "Race specificity"
+    },
+    "day_4": {
+      "label": "Upper Strength + Tempo",
+      "blocks": ["upper_push_pull", "tempo_run"],
+      "intensity": "moderate",
+      "goal": "Sustained effort"
+    },
+    "day_5": {
+      "label": "Long Endurance",
+      "blocks": ["long_run_or_hybrid"],
+      "intensity": "moderate",
+      "goal": "Long endurance"
+    }
+  },
+  "intensity_distribution": {
+    "high_intensity_days": 2,
+    "moderate_days": 2,
+    "low_intensity_days": 1
+  },
+  "progression_6_weeks": {
+    "weeks_1_2": "build_volume",
+    "weeks_3_4": "increase_intensity",
+    "week_5": "peak_simulation",
+    "week_6": "taper"
+  },
+  "constraints": {
+    "no_consecutive_high_intensity": true,
+    "min_zone2_sessions_per_week": 1,
+    "min_strength_sessions_per_week": 2,
+    "min_hyrox_sessions_per_week": 1,
+    "max_training_days": 5
+  },
+  "multi_goal_logic": {
+    "priority_rule": "closest_event_is_primary",
+    "secondary_rule": "maintenance_only",
+    "hyrox_phase": {
+      "weeks": "1-6",
+      "priority": "hyrox",
+      "maintain": ["1_long_run", "1_zone2"]
+    },
+    "half_marathon_phase": {
+      "weeks": "7-10",
+      "priority": "21k",
+      "reduce": ["heavy_strength", "hyrox_circuits"],
+      "increase": ["running_volume", "tempo_runs"]
+    }
+  },
+  "workout_templates": {
+    "lower_heavy": {
+      "exercises": ["Deadlift 4x5", "Bulgarian split squat 3x8", "Romanian deadlift 3x10"],
+      "rest": "2-3 min"
+    },
+    "explosive_power": {
+      "exercises": ["Box jumps 4x5", "Broad jumps 3x4"],
+      "rest": "90 sec"
+    },
+    "short_intervals": {
+      "format": "6x400m",
+      "rest": "90 sec between reps",
+      "pace": "5K race pace"
+    },
+    "zone2_run": {
+      "duration_min": 40,
+      "duration_max": 60,
+      "hr_zone": 2,
+      "rpe": "3-4/10"
+    },
+    "hyrox_simulation": {
+      "rounds": 4,
+      "format": "200m run + station",
+      "stations": ["sled_push_alt", "burpees_over_bar", "walking_lunges", "sandbag_carry_alt"]
+    },
+    "upper_push_pull": {
+      "exercises": ["Bench press 4x6", "Pull-ups 4x6", "DB shoulder press 3x10", "Cable row 3x10"],
+      "rest": "90 sec"
+    },
+    "tempo_run": {
+      "duration_min": 20,
+      "duration_max": 30,
+      "rpe": "7/10",
+      "description": "Comfortably hard, can say short sentences"
+    },
+    "long_run": {
+      "duration_min": 60,
+      "duration_max": 90,
+      "hr_zone": 2,
+      "rpe": "5/10"
+    }
+  }
+}]
