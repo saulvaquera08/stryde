@@ -55,7 +55,8 @@ export default async function MorePage() {
   // Compute streak
   let streak = 0
   if (allCompleted.length > 0) {
-    const dates = allCompleted.map(c => c.completed_at.split('T')[0]).reverse()
+    // allCompleted is already DESC (most recent first) — do NOT reverse
+    const dates = allCompleted.map(c => c.completed_at.split('T')[0])
     const today = new Date().toISOString().split('T')[0]
     let checkDate = today
     for (const d of dates) {

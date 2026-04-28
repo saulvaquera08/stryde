@@ -153,7 +153,7 @@ function buildPrompt(ctx: CoachContext): string {
   if (ctx.recentCompleted.length > 0) {
     lines.push('Últimos 7 días:')
     for (const w of ctx.recentCompleted) {
-      const ratingStr = w.rating !== null ? ` (${w.rating}/5)` : ''
+      const ratingStr = w.rating !== null ? ` (${w.rating}/10)` : ''
       lines.push(`  - ${w.day_type}${ratingStr}`)
     }
     const ratingsWithValue = ctx.recentCompleted.filter(w => w.rating !== null)

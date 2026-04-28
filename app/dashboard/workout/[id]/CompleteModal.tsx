@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Loader2, Timer } from 'lucide-react'
+import { X, Loader2, Timer, CheckCircle2 } from 'lucide-react'
 import { completeWorkout } from './actions'
 
 interface Props {
@@ -29,14 +29,33 @@ export default function CompleteModal({ workoutId, elapsedSeconds, onClose }: Pr
   const [difficulty, setDifficulty] = useState(0)
   const [notes, setNotes]           = useState('')
   const [isPending, start]          = useTransition()
+  const [done, setDone]             = useState(false)
   const router                      = useRouter()
 
   const handleSubmit = () => {
     if (difficulty === 0) return
     start(async () => {
       await completeWorkout(workoutId, difficulty, notes, elapsedSeconds)
-      router.push('/dashboard')
+      setDone(true)
+      setTimeout(() => router.push('/dashboard'), 1600)
     })
+  }
+
+  // Success state
+  if (done) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm px-4 pb-8">
+        <div className="w-full max-w-lg bg-[#141414] border border-[#C8FF00]/30 rounded-2xl p-8 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-[#C8FF00]/15 flex items-center justify-center">
+            <CheckCircle2 size={36} className="text-[#C8FF00]" strokeWidth={2} />
+          </div>
+          <div className="text-center">
+            <p className="text-white text-xl font-bold mb-1">¡Entrenamiento completado!</p>
+            <p className="text-[#888] text-sm">{formatTime(elapsedSeconds)} · RPE {difficulty}/10</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -64,7 +83,7 @@ export default function CompleteModal({ workoutId, elapsedSeconds, onClose }: Pr
         {/* Difficulty 1-10 */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[#888888] text-sm">Nivel de dificultad</p>
+            <p className="text-[#888888] text-sm">Nivel de dificultad (RPE)</p>
             {difficulty > 0 && (
               <span className="text-[#C8FF00] text-sm font-semibold">
                 {difficulty} — {DIFFICULTY_LABELS[difficulty]}

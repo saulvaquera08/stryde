@@ -42,7 +42,7 @@ export default async function TodayPage() {
   if (!user) redirect('/login')
 
   const todayISO = new Date().toISOString().split('T')[0]
-  const hour     = new Date().getUTCHours()
+  const hour     = new Date().getHours()
 
   const now      = new Date()
   const weekday  = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()

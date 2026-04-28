@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
+  const router                  = useRouter()
 
   const supabase = createClient()
 
@@ -23,8 +25,9 @@ export default function LoginPage() {
     if (error) {
       setError('Email o contraseña incorrectos')
       setLoading(false)
+    } else {
+      router.push('/dashboard')
     }
-    // middleware will redirect to /today on success
   }
 
   const handleGoogle = async () => {
