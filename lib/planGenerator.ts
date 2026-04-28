@@ -84,6 +84,18 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
       exercises: ['Sumo deadlift 4x5', 'Hip thrust 4x10', 'Nordic curl 3x6', 'Kettlebell swing 4x15', 'Core: hollow body 3x30s'],
       rest: '2 min / 60s',
     },
+    {
+      id: 'SL_E', name: 'Lower Power Real', duration: 55,
+      subtitle: 'Front squat · Farmer carry · SL hops',
+      exercises: ['Front squat 6 reps', 'SB squeeze 20 reps', 'KB swings 20 reps explosivo', 'Band hip flexor 8/8', 'Trap bar farmer carry 30m', 'Kneeling paloff 8/8', 'SL RDL 8/8', 'SL hops/bounds 15m explosivo'],
+      rest: '2 min / 90s',
+    },
+    {
+      id: 'SL_F', name: 'Strength Lower Clásico HYROX', duration: 55,
+      subtitle: 'Back squat · Deadlift · Box jumps',
+      exercises: ['Back squats 4x5-6', 'Deadlifts 3x3-5', 'Box jumps o jump squats 3x6-8', 'Lunges con mancuernas 3x8 por pierna', 'Calf raises 3x12-15'],
+      rest: '2-3 min / 60s',
+    },
   ],
 
   // ── Strength Upper (no running, no squats pesados) ───────────────────────
@@ -107,10 +119,22 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
       rest: '60s',
     },
     {
-      id: 'SU_D', name: 'Shoulder/Back Focus', duration: 50,
-      subtitle: 'OHP · Weighted pull-ups',
-      exercises: ['Overhead press 4x6', 'Weighted pull-ups 4x5', 'Single-arm DB row 3x10', 'Lateral raises 3x15', 'Face pulls 4x15'],
-      rest: '90s',
+      id: 'SU_D', name: 'Upper Push Focus', duration: 50,
+      subtitle: 'Bench · OHP · Dips',
+      exercises: ['Bench press 4x5-6', 'Incline bench press o DB press 3x6-8', 'Overhead press 3x5-6', 'Dips ponderado o corporal 3x6-8', 'Tricep rope pushdowns o skull crushers 3x8-10'],
+      rest: '90s-2 min',
+    },
+    {
+      id: 'SU_E', name: 'Upper Pull Focus', duration: 50,
+      subtitle: 'Pull-ups · Barbell rows · Curls',
+      exercises: ['Pull-ups o lat pulldowns 4x5-6', 'Barbell rows 4x5-6', 'Dumbbell rows 3x8-10 por brazo', 'Barbell curls 3x6-8', 'Face pulls o reverse pec deck 3x12-15'],
+      rest: '60s-2 min',
+    },
+    {
+      id: 'SU_F', name: 'Upper HYROX Functional', duration: 55,
+      subtitle: 'Shoulder press · Burpee box jump · Farmer carry',
+      exercises: ['Seated shoulder press 15 reps', 'Kneeling wall balls 8 reps explosivo', 'LM row 10/10', 'Cuban press 8 reps', 'Burpee box jump 4x6-8', 'Farmer carry sprint 4x30-40m', 'Sled push o push-ups explosivos 4x20-30m', 'Rope climb o pull-up explosivo 3x4-5', 'Battle ropes o underbar crawl 3x30s'],
+      rest: '2 min / 90s',
     },
   ],
 
@@ -197,8 +221,51 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
       format: '4 bloques: 1km tempo + ejercicio funcional',
       blocks: ['1km tempo · 15 burpees', '1km tempo · 20 walking lunges', '1km tempo · 30 wall balls', '1km easy'],
     },
+    {
+      id: 'HX_E', name: 'WOD Descending Ladder', duration: 65,
+      subtitle: 'AMRAP 8 · FOR TIME 50-40-30-20-10 · AMRAP 12',
+      format: 'Warmup AMRAP 8 · Main: FOR TIME Ladder 50-40-30-20-10 · Finisher AMRAP 12 min alternos (sprint/plank)',
+      exercises: ['Cal máquina o 500/400/300/200/100m run', 'DB Power Clean', 'DB Push Press'],
+    },
+    {
+      id: 'HX_F', name: 'WOD Stations 400m', duration: 45,
+      subtitle: 'AMRAP 9 warmup · AMRAP 26 ladder 10-20-30-40-50',
+      format: 'Warmup AMRAP 9 · Main AMRAP 26: Ladder 10-20-30-40-50',
+      exercises: ['DB Row', 'DB Swing to Snatch', 'DB Press', 'DB Russian Twist'],
+    },
+    {
+      id: 'HX_G', name: 'EMOM + AMRAP Hybrid', duration: 55,
+      subtitle: 'EMOM 20 min · AMRAP 14 min',
+      format: 'Block 1 EMOM 20: 45s cardio | 8/8 front rack lunges | 45s bicycle crunch | 4 man makers\nBlock 2 AMRAP 14: 8 RDL | 20/20s single arm plank | 15 burpees',
+    },
+    {
+      id: 'HX_H', name: 'E3MOM Core + Cardio Intervals', duration: 45,
+      subtitle: 'E3MOM x4 · Intervalos cardio+fuerza 19 min',
+      format: 'Block 1 E3MOM x4 (12 min): side bends | windmills | cardio moderado\nBlock 2 Intervalos 19 min: 5-4-3-2-1 min cardio alternado con KB swings, upright row, DB drag, heels over DB',
+    },
+    {
+      id: 'HX_I', name: 'Sled + Stations WOD', duration: 55,
+      subtitle: '2 min ON / 1 min OFF · 400m entre estaciones',
+      format: '2 min ON / 1 min OFF · 400m entre cada cambio de estación',
+      stations: ['Ergs (remo)', 'Wall balls', 'B2P (burpee to plate)', 'Farmer carry', 'Walking lunges'],
+    },
+    {
+      id: 'HX_J', name: 'HYROX Race Prep WOD', duration: 60,
+      subtitle: 'FOR TIME · 4 rondas · 400m entre rondas',
+      format: '4 rondas FOR TIME · 400m run o 22 cal entre rondas',
+      exercises: ['18 cal (máquina)', '40 wall balls', '40m walking lunges', '40 B2P (burpee to plate)'],
+      rounds: 4,
+    },
   ],
 }
+
+// ─── Run warmups ──────────────────────────────────────────────────────────────
+
+const RUN_WARMUPS = [
+  { id: 'RW_A', duration: 5, exercises: ['10 high knees', '10 butt kicks', '10 pogo jumps', '4 strides de 20 seg'] },
+  { id: 'RW_B', duration: 5, exercises: ['A-skip 20m', 'B-skip 20m', 'High knees 20m', '2 strides'] },
+  { id: 'RW_C', duration: 7, exercises: ['1 min trote suave', '10/10 front lunges', '10 good mornings', '3 strides'] },
+]
 
 // ─── Slot definitions ─────────────────────────────────────────────────────────
 // Slots ordered to alternate intensity naturally.
@@ -332,11 +399,11 @@ export function buildPeriodization(totalWeeks: number): Array<{ phase: TrainingP
 // TAPER phase → lowest volume (first in pool / stations-only for hyrox)
 
 function pickVariant(slot: SlotKey, weekNum: number, phase: TrainingPhase): LibraryVariant {
-  // Hyrox is fully phase-driven — handled separately
+  // Hyrox: rotate through all 10 variants (week % 10), taper always gets stations-only (HX_C)
   if (slot === 'HX') {
-    if (phase === 'taper')                         return LIBRARY.hyrox_sim[2] // HX_C: stations only
-    if (phase === 'peak' || phase === 'specific')  return weekNum % 2 === 1 ? LIBRARY.hyrox_sim[0] : LIBRARY.hyrox_sim[3] // full sim ↔ run+fatigue
-    return weekNum % 2 === 1 ? LIBRARY.hyrox_sim[1] : LIBRARY.hyrox_sim[3] // half sim ↔ run+fatigue
+    if (phase === 'taper') return LIBRARY.hyrox_sim[2] // HX_C: stations only, moderate
+    const idx = (weekNum - 1) % LIBRARY.hyrox_sim.length
+    return LIBRARY.hyrox_sim[idx]
   }
 
   // Pick pool based on slot + phase
@@ -566,12 +633,24 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
       const workoutDate = addDays(weekStart, dayOfWeek - 1)
       const intensity   = slotIntensity(slot, phase)
 
+      const blocks: WorkoutBlock[] = []
+      if (dayType === 'run_day') {
+        const rw = RUN_WARMUPS[(week - 1) % RUN_WARMUPS.length]
+        blocks.push({
+          type:      'cardio',
+          label:     'Calentamiento',
+          format:    `${rw.duration} min`,
+          exercises: rw.exercises.map(e => ({ name: e })),
+        })
+      }
+      blocks.push(variantToBlock(variant, dayType))
+
       workouts.push({
         user_id:          userId,
         scheduled_date:   toDateStr(workoutDate),
         week_number:      week,
         day_type:         dayType,
-        blocks:           [variantToBlock(variant, dayType)],
+        blocks,
         duration_minutes: Math.round(variant.duration * durationMod),
         intensity,
         goals_tags:       GOALS_TAGS[dayType] ?? [],

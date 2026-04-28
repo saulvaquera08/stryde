@@ -71,6 +71,31 @@
       "increase": ["running_volume", "tempo_runs"]
     }
   },
+  "formats": {
+    "AMRAP": "As Many Rounds As Possible en tiempo fijo",
+    "EMOM": "Every Minute On the Minute",
+    "E3MOM": "Every 3 Minutes On the Minute",
+    "FOR_TIME": "Completar lo antes posible",
+    "DESCENDING_LADDER": "50-40-30-20-10 reps",
+    "INTERVALS": "X tiempo ON / Y tiempo OFF"
+  },
+  "run_warmups": [
+    {
+      "id": "RW_A",
+      "duration": 5,
+      "exercises": ["10 high knees", "10 butt kicks", "10 pogo jumps", "4 strides de 20 seg"]
+    },
+    {
+      "id": "RW_B",
+      "duration": 5,
+      "exercises": ["A-skip 20m", "B-skip 20m", "High knees 20m", "2 strides"]
+    },
+    {
+      "id": "RW_C",
+      "duration": 7,
+      "exercises": ["1 min trote suave", "10/10 front lunges", "10 good mornings", "3 strides"]
+    }
+  ],
   "workout_library": {
 
     "strength_lower": [
@@ -122,6 +147,42 @@
         ],
         "rest": "2 min / 60s",
         "duration": 50
+      },
+      {
+        "id": "SL_E",
+        "name": "Lower Power Real",
+        "source": "clase_real",
+        "format": "Sets A/B/C",
+        "blocks": {
+          "A": [
+            "Front squat 6 reps",
+            "SB squeeze 20 reps",
+            "KB swings 20 reps (explosivo)",
+            "Band hip flexor 8/8"
+          ],
+          "C": [
+            "Trap bar farmer carry 30m",
+            "Kneeling paloff 8/8",
+            "SL RDL 8/8",
+            "SL hops/bounds 15m/15m (explosivo)"
+          ]
+        },
+        "duration": 55,
+        "intensity": "high"
+      },
+      {
+        "id": "SL_F",
+        "name": "Strength Lower Clásico HYROX",
+        "source": "clase_real",
+        "exercises": [
+          { "name": "Back squats", "sets": 4, "reps": "5-6", "rest": "2 min" },
+          { "name": "Deadlifts", "sets": 3, "reps": "3-5", "rest": "2-3 min" },
+          { "name": "Box jumps o jump squats", "sets": 3, "reps": "6-8", "rest": "2 min" },
+          { "name": "Lunges con mancuernas", "sets": 3, "reps": "8 por pierna", "rest": "60 seg" },
+          { "name": "Calf raises", "sets": 3, "reps": "12-15", "rest": "45 seg" }
+        ],
+        "duration": 55,
+        "intensity": "high"
       }
     ],
 
@@ -165,6 +226,58 @@
         "rest": "60s",
         "duration": 45,
         "notes": "Alta repetición, simula fatiga HYROX"
+      },
+      {
+        "id": "SU_D",
+        "name": "Upper Push Focus",
+        "source": "clase_real",
+        "exercises": [
+          { "name": "Bench press", "sets": 4, "reps": "5-6", "rest": "2 min" },
+          { "name": "Incline bench press o DB press", "sets": 3, "reps": "6-8", "rest": "90 seg" },
+          { "name": "Overhead press (press militar)", "sets": 3, "reps": "5-6", "rest": "90 seg" },
+          { "name": "Dips (ponderado o corporal)", "sets": 3, "reps": "6-8", "rest": "90 seg" },
+          { "name": "Tricep rope pushdowns o skull crushers", "sets": 3, "reps": "8-10", "rest": "60 seg" }
+        ],
+        "duration": 50,
+        "intensity": "high"
+      },
+      {
+        "id": "SU_E",
+        "name": "Upper Pull Focus",
+        "source": "clase_real",
+        "exercises": [
+          { "name": "Pull-ups o lat pulldowns", "sets": 4, "reps": "5-6", "rest": "2 min" },
+          { "name": "Barbell rows", "sets": 4, "reps": "5-6", "rest": "90 seg" },
+          { "name": "Dumbbell rows", "sets": 3, "reps": "8-10 por brazo", "rest": "60 seg" },
+          { "name": "Barbell curls", "sets": 3, "reps": "6-8", "rest": "60 seg" },
+          { "name": "Face pulls o reverse pec deck", "sets": 3, "reps": "12-15", "rest": "45 seg" }
+        ],
+        "duration": 50,
+        "intensity": "high"
+      },
+      {
+        "id": "SU_F",
+        "name": "Upper HYROX Functional",
+        "source": "clase_real",
+        "format": "Sets A/B",
+        "blocks": {
+          "A": [
+            "Seated shoulder press 15 reps",
+            "Kneeling wall balls 8 reps (explosivo)",
+            "LM row 10/10",
+            "Cuban press 8 reps"
+          ],
+          "B": [
+            "Burpee box jump 4x6-8 — descanso 2 min",
+            "Farmer carry sprint 4x30-40m — descanso 90 seg",
+            "Sled push o push-ups explosivos 4x20-30m — descanso 2 min",
+            "Rope climb o pull-up explosivo 3x4-5 — descanso 2 min",
+            "Battle ropes o underbar crawl 3x30 seg — descanso 90 seg"
+          ]
+        },
+        "duration": 55,
+        "intensity": "high",
+        "notes": "Bloque B simula demandas funcionales de HYROX"
       }
     ],
 
@@ -230,6 +343,206 @@
         "duration": 55,
         "intensity": "high",
         "notes": "Entrena como compites: run + fatigue muscular"
+      },
+      {
+        "id": "HX_E",
+        "name": "WOD Descending Ladder",
+        "source": "clase_real",
+        "warmup": {
+          "format": "AMRAP 8 min",
+          "exercises": [
+            "1 min cardio (bici, remo, elíptica)",
+            "10 squats",
+            "10 push-ups",
+            "10 supermans"
+          ]
+        },
+        "main": {
+          "format": "FOR TIME — Descending ladder 50-40-30-20-10",
+          "exercises": [
+            "Calorias en máquina (o 500/400/300/200/100m run)",
+            "DB Power Clean",
+            "DB Push Press"
+          ],
+          "rest_between_sets": "ninguno — for time"
+        },
+        "finisher": {
+          "format": "AMRAP 12 min — Minutos alternos",
+          "odd_minutes": "30 seg sprint (máquina, run o burpees)",
+          "even_minutes": "30 seg plank"
+        },
+        "duration": 65,
+        "intensity": "high"
+      },
+      {
+        "id": "HX_F",
+        "name": "WOD Stations 400m",
+        "source": "clase_real",
+        "warmup": {
+          "format": "AMRAP 9 min",
+          "exercises": [
+            "1 min cardio",
+            "8/8 Renegade row",
+            "8 Z press",
+            "8 Good mornings"
+          ]
+        },
+        "main": {
+          "format": "AMRAP 26 min — Ladder 10-20-30-40-50",
+          "exercises": [
+            "DB Row",
+            "DB Swing to Snatch",
+            "DB Press",
+            "DB Russian Twist"
+          ]
+        },
+        "cooldown": {
+          "format": "6 min estructurado",
+          "structure": [
+            "45 seg cardio suave",
+            "20/20 seg Lat stretch",
+            "20/20 seg Cross shoulder stretch x2"
+          ]
+        },
+        "duration": 45,
+        "intensity": "moderate-high"
+      },
+      {
+        "id": "HX_G",
+        "name": "EMOM + AMRAP Hybrid",
+        "source": "clase_real",
+        "warmup": {
+          "format": "7 min",
+          "exercises": [
+            "2 min cardio",
+            "1 min air squats",
+            "1 min DB deadlift",
+            "2 min jumping jacks",
+            "1 min down dog calf pedal"
+          ]
+        },
+        "main": [
+          {
+            "block": 1,
+            "format": "EMOM 20 min",
+            "exercises": [
+              "45 seg cardio",
+              "8/8 Alt front rack lunges",
+              "45 seg bicycle kick crunch",
+              "4 man makers"
+            ]
+          },
+          {
+            "block": 2,
+            "format": "AMRAP 14 min",
+            "exercises": [
+              "8 RDL",
+              "20/20 seg single arm plank",
+              "15 burpees"
+            ]
+          }
+        ],
+        "duration": 55,
+        "intensity": "high"
+      },
+      {
+        "id": "HX_H",
+        "name": "E3MOM Core + Cardio Intervals",
+        "source": "clase_real",
+        "warmup": {
+          "format": "AMRAP 10 min",
+          "exercises": [
+            "10/10 plank reach",
+            "10/10 side plank hip touches",
+            "10 good mornings",
+            "1 min cardio"
+          ]
+        },
+        "main": [
+          {
+            "block": 1,
+            "format": "E3MOM x4 (12 min)",
+            "exercises": [
+              "12/12 side bends",
+              "10/10 windmills",
+              "Cardio moderado el resto del tiempo"
+            ]
+          },
+          {
+            "block": 2,
+            "format": "Intervalos 19 min — cardio + fuerza alternos",
+            "structure": [
+              "5 min cardio",
+              "1 min KB swings",
+              "4 min cardio",
+              "1 min upright row",
+              "3 min cardio",
+              "1 min DB drag",
+              "2 min cardio",
+              "1 min heels over DB",
+              "1 min cardio"
+            ]
+          }
+        ],
+        "duration": 45,
+        "intensity": "moderate"
+      },
+      {
+        "id": "HX_I",
+        "name": "Sled + Stations WOD",
+        "source": "clase_real_whiteboard",
+        "warmup": {
+          "format": "5 ejercicios",
+          "exercises": [
+            "10 KB swings",
+            "10 Ronin/Superman",
+            "10/10 Front lunges",
+            "70/80 Side plate",
+            "10 calories"
+          ]
+        },
+        "main": {
+          "format": "WOD — 2 min ON / 1 min OFF",
+          "stations": [
+            "Ergs (remo)",
+            "Wall balls",
+            "B2P (burpee to plate)",
+            "Farmer carry",
+            "Walking lunges"
+          ],
+          "notes": "400m entre cada cambio de estación"
+        },
+        "duration": 55,
+        "intensity": "high"
+      },
+      {
+        "id": "HX_J",
+        "name": "HYROX Race Prep WOD",
+        "source": "clase_real_whiteboard",
+        "warmup": {
+          "format": "5 ejercicios",
+          "exercises": [
+            "10 High knees",
+            "10 Butt kicks",
+            "10 Pogo jumps",
+            "20 seg plank",
+            "10/10 Front lunge",
+            "10 cal"
+          ]
+        },
+        "main": {
+          "format": "FOR TIME — 400m entre cada ronda",
+          "rounds": 4,
+          "exercises_per_round": [
+            "18 cal (máquina)",
+            "40 wall balls",
+            "40m walking lunges",
+            "40 B2P (burpee to plate)"
+          ],
+          "between_rounds": "400m run o 22 cal máquina"
+        },
+        "duration": 60,
+        "intensity": "high"
       }
     ],
 
@@ -392,8 +705,10 @@
   },
 
   "weekly_rotation": {
-    "description": "Rotar variantes A/B/C/D para que nunca se repita el mismo workout dos semanas seguidas",
-    "rule": "semana_1=A, semana_2=B, semana_3=C, semana_4=D, semana_5=A+10%_volumen, semana_6=taper"
+    "description": "Rotar variantes A→J para que nunca se repita el mismo workout en planes de hasta 10 semanas",
+    "hyrox_simulation": "HX_A → HX_B → HX_C → HX_D → HX_E → HX_F → HX_G → HX_H → HX_I → HX_J (semana % 10)",
+    "strength_lower": "SL_A → SL_B → SL_C → SL_D → SL_E → SL_F (semana % 6)",
+    "strength_upper": "SU_A → SU_B → SU_C → SU_D → SU_E → SU_F (semana % 6)"
   },
 
   "zone_distribution": {
