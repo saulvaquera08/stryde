@@ -174,64 +174,117 @@ function buildSchedule(trainingDays: string[]): { dayOfWeek: number; slot: strin
   }))
 }
 
+// ─── Training phases ──────────────────────────────────────────────────────────
+
+export type TrainingPhase = 'base' | 'build' | 'peak' | 'taper'
+
+export const PHASE_LABELS: Record<TrainingPhase, string> = {
+  base:  'BASE',
+  build: 'BUILD',
+  peak:  'PEAK',
+  taper: 'TAPER',
+}
+
+// ─── Periodization ───────────────────────────────────────────────────────────
+
+function calcTotalWeeks(goals: PlanProfile['goals']): number {
+  const upcoming = goals
+    .filter(g => g.race_date)
+    .map(g => Math.ceil((new Date(g.race_date!).getTime() - Date.now()) / (7 * 86_400_000)))
+    .filter(w => w > 0)
+    .sort((a, b) => a - b)
+
+  return upcoming.length
+    ? Math.min(Math.max(upcoming[0], 3), 24)
+    : 8
+}
+
+function buildPeriodization(totalWeeks: number): Array<{ phase: TrainingPhase; durationMod: number }> {
+  type BlockCfg = { phase: TrainingPhase; pct: number; baseMod: number; stepMod: number }
+
+  const cfg: BlockCfg[] =
+    totalWeeks >= 12
+      ? [
+          { phase: 'base',  pct: 0.40, baseMod: 0.75, stepMod: +0.05 },
+          { phase: 'build', pct: 0.35, baseMod: 0.90, stepMod: +0.05 },
+          { phase: 'peak',  pct: 0.15, baseMod: 1.10, stepMod: +0.02 },
+          { phase: 'taper', pct: 0.10, baseMod: 0.65, stepMod: -0.15 },
+        ]
+      : totalWeeks >= 6
+        ? [
+            { phase: 'build', pct: 0.50, baseMod: 0.85, stepMod: +0.05 },
+            { phase: 'peak',  pct: 0.35, baseMod: 1.05, stepMod: +0.05 },
+            { phase: 'taper', pct: 0.15, baseMod: 0.65, stepMod: -0.15 },
+          ]
+        : [
+            { phase: 'peak',  pct: 0.70, baseMod: 0.95, stepMod: +0.03 },
+            { phase: 'taper', pct: 0.30, baseMod: 0.65, stepMod: -0.15 },
+          ]
+
+  const result: Array<{ phase: TrainingPhase; durationMod: number }> = []
+
+  for (const block of cfg) {
+    const weeks = Math.round(totalWeeks * block.pct)
+    for (let i = 0; i < weeks; i++) {
+      const raw = block.baseMod + block.stepMod * i
+      result.push({ phase: block.phase, durationMod: Math.round(Math.max(0.50, Math.min(1.20, raw)) * 100) / 100 })
+    }
+  }
+
+  // Pad/trim to exactly totalWeeks
+  while (result.length < totalWeeks) result.push({ phase: 'taper', durationMod: 0.60 })
+  return result.slice(0, totalWeeks)
+}
+
 // ─── Slot → category mapping ──────────────────────────────────────────────────
-// For endurance-primary goals, hyrox_or_tempo resolves to a running session.
-// For hyrox/strength goals, it resolves to the HYROX simulation.
 
 function resolveSlotCategories(
   slot: string,
   primaryGoal: string,
-  weekNum: number,
-  isTaper: boolean,
+  phase: TrainingPhase,
 ): string[] {
-  if (isTaper) {
-    // Taper: all high-intensity slots become zone2 or recovery
-    if (slot === 'hyrox_or_tempo') return ['tempo']
-    if (slot === 'strength_intervals') return ['strength_lower']
-    if (slot === 'upper_tempo') return ['strength_upper']
-  }
-
   const isEnduranceGoal = ['21k', '5k', '10k'].includes(primaryGoal)
 
+  // TAPER — lighter, no race-specific volume
+  if (phase === 'taper') {
+    if (slot === 'hyrox_or_tempo')     return ['tempo']
+    if (slot === 'strength_intervals') return ['strength_lower']
+    if (slot === 'upper_tempo')        return ['strength_upper']
+    if (slot === 'long_run')           return ['zone2_run']
+    return ['zone2_run']
+  }
+
+  // BASE — aerobic foundation, general strength, no race-specific work
+  if (phase === 'base') {
+    if (slot === 'hyrox_or_tempo')     return ['zone2_run']
+    if (slot === 'long_run')           return ['zone2_run']
+    if (slot === 'upper_tempo')        return ['strength_upper']
+    if (slot === 'strength_intervals')
+      return isEnduranceGoal ? ['zone2_run', 'strength_lower'] : ['strength_lower', 'zone2_run']
+    return ['zone2_run']
+  }
+
+  // BUILD & PEAK — normal race-specific work, concurrent order by goal
   switch (slot) {
     case 'strength_intervals':
-      // Concurrent order: endurance goals → intervals first, then strength
-      return isEnduranceGoal
-        ? ['intervals', 'strength_lower']
-        : ['strength_lower', 'intervals']
-
+      return isEnduranceGoal ? ['intervals', 'strength_lower'] : ['strength_lower', 'intervals']
     case 'hyrox_or_tempo':
-      // Endurance goals skip HYROX sim — use tempo or intervals instead
       return isEnduranceGoal ? ['tempo'] : ['hyrox_simulation']
-
     case 'upper_tempo':
-      // Endurance goals: cardio first
-      return isEnduranceGoal
-        ? ['tempo', 'strength_upper']
-        : ['strength_upper', 'tempo']
-
-    case 'zone2':
-      return ['zone2_run']
-
-    case 'long_run':
-      return ['long_run']
-
-    default:
-      return ['zone2_run']
+      return isEnduranceGoal ? ['tempo', 'strength_upper'] : ['strength_upper', 'tempo']
+    case 'zone2':   return ['zone2_run']
+    case 'long_run': return ['long_run']
+    default:         return ['zone2_run']
   }
 }
 
 // ─── Variant picker ───────────────────────────────────────────────────────────
-// Cycles through A/B/C/D so the same slot never has the same workout_id
-// on consecutive weeks.
+// Week 1=A, 2=B, 3=C, 4=D, 5=A (peak), 6=taper→always A (-30% via durationMod).
+// The same slot will never have the same variant id two consecutive weeks.
 
-function pickVariant(category: string, weekNum: number, isTaper: boolean): LibraryVariant {
+function pickVariant(category: string, weekNum: number, phase: TrainingPhase): LibraryVariant {
   const variants = LIBRARY[category] ?? LIBRARY.zone2_run
-  if (isTaper) {
-    // Taper: use the shortest variant (last one tends to be the lighter option)
-    return variants[variants.length - 1]
-  }
-  // Weeks 1-4 cycle A→B→C→D; week 5 = A (same as week 1, peak volume)
+  if (phase === 'taper') return variants[0] // variant A, volume comes from durationMod
   const idx = (weekNum - 1) % variants.length
   return variants[idx]
 }
@@ -284,54 +337,45 @@ function variantToBlock(variant: LibraryVariant, category: string): WorkoutBlock
 
 function slotToMeta(
   slot: string,
-  categories: string[],
   primaryGoal: string,
-  isTaper: boolean,
-): { label: string; intensity: IntensityLevel; goalsTags: string[] } {
+  phase: TrainingPhase,
+): { slotLabel: string; intensity: IntensityLevel; goalsTags: string[] } {
   const isEnduranceGoal = ['21k', '5k', '10k'].includes(primaryGoal)
 
-  if (isTaper) {
-    return { label: 'Taper / Recuperación', intensity: 'low', goalsTags: ['recovery', 'taper'] }
+  if (phase === 'taper') {
+    return { slotLabel: 'Recuperación', intensity: 'low', goalsTags: ['recovery', 'taper'] }
   }
 
+  if (phase === 'base') {
+    switch (slot) {
+      case 'strength_intervals': return { slotLabel: 'Fuerza Base + Z2',  intensity: 'moderate', goalsTags: ['strength', 'aerobic_base'] }
+      case 'upper_tempo':        return { slotLabel: 'Tren Superior Base', intensity: 'moderate', goalsTags: ['strength'] }
+      default:                   return { slotLabel: 'Carrera Z2',         intensity: 'low',      goalsTags: ['aerobic_base'] }
+    }
+  }
+
+  // BUILD & PEAK
   switch (slot) {
     case 'strength_intervals':
       return {
-        label:     'Fuerza + Intervalos',
+        slotLabel: 'Fuerza + Intervalos',
         intensity: 'high',
-        goalsTags: isEnduranceGoal
-          ? ['lactate_tolerance', 'strength']
-          : ['strength', 'power', 'lactate_tolerance'],
+        goalsTags: isEnduranceGoal ? ['lactate_tolerance', 'strength'] : ['strength', 'power', 'lactate_tolerance'],
       }
     case 'hyrox_or_tempo':
       return isEnduranceGoal
-        ? { label: 'Tempo Run',          intensity: 'moderate', goalsTags: ['sustained_effort', 'aerobic_base'] }
-        : { label: 'HYROX Simulation',   intensity: 'high',     goalsTags: ['hyrox', 'race_specificity'] }
+        ? { slotLabel: 'Tempo Run',        intensity: 'moderate', goalsTags: ['sustained_effort', 'aerobic_base'] }
+        : { slotLabel: 'HYROX Simulation', intensity: 'high',     goalsTags: ['hyrox', 'race_specificity'] }
     case 'upper_tempo':
-      return {
-        label:     'Tren Superior + Tempo',
-        intensity: 'moderate',
-        goalsTags: ['strength', 'sustained_effort'],
-      }
+      return { slotLabel: 'Tren Superior + Tempo', intensity: 'moderate', goalsTags: ['strength', 'sustained_effort'] }
     case 'zone2':
-      return { label: 'Carrera Z2',     intensity: 'low',      goalsTags: ['aerobic_base', 'recovery'] }
+      return { slotLabel: 'Carrera Z2',    intensity: 'low',      goalsTags: ['aerobic_base', 'recovery'] }
     case 'long_run':
-      return { label: 'Rodaje Largo',   intensity: 'moderate', goalsTags: ['endurance', 'aerobic_base'] }
+      return { slotLabel: 'Rodaje Largo',  intensity: 'moderate', goalsTags: ['endurance', 'aerobic_base'] }
     default:
-      return { label: slot,             intensity: 'low',      goalsTags: [] }
+      return { slotLabel: slot,            intensity: 'low',      goalsTags: [] }
   }
 }
-
-// ─── 6-week progression ───────────────────────────────────────────────────────
-
-const WEEK_MODS = [
-  { phase: 'build_volume',       durationMod: 0.80 }, // week 1
-  { phase: 'build_volume',       durationMod: 0.90 }, // week 2
-  { phase: 'increase_intensity', durationMod: 1.00 }, // week 3
-  { phase: 'increase_intensity', durationMod: 1.05 }, // week 4
-  { phase: 'peak_simulation',    durationMod: 1.10 }, // week 5
-  { phase: 'taper',              durationMod: 0.70 }, // week 6
-]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -369,11 +413,16 @@ function toDateStr(date: Date): string {
 
 export function generatePlan(userId: string, profile: PlanProfile): GeneratedPlan {
   const startDate  = getNextMonday()
-  const totalWeeks = 6
+  const totalWeeks = calcTotalWeeks(profile.goals)
   const endDate    = addDays(startDate, totalWeeks * 7 - 1)
+  const periodization = buildPeriodization(totalWeeks)
 
   const schedule = buildSchedule(profile.training_days)
   const primary  = getPrimaryGoal(profile.goals)
+
+  // Build phase_map (1-indexed) for dashboard consumption
+  const phaseMap: Record<number, TrainingPhase> = {}
+  periodization.forEach(({ phase }, i) => { phaseMap[i + 1] = phase })
 
   const plan: PlanInsert = {
     user_id:     userId,
@@ -381,7 +430,6 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
     end_date:    toDateStr(endDate),
     total_weeks: totalWeeks,
     structure: {
-      phase:          'initial',
       available_days: profile.training_days.length,
       level:          profile.level,
       equipment:      profile.equipment,
@@ -389,42 +437,55 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
       primary_goal:   primary,
       training_days:  profile.training_days,
       zone_bias:      ZONE_DIST[primary] ?? ZONE_DIST.hyrox,
-      progression:    WEEK_MODS.map(m => m.phase),
+      phase_map:      phaseMap,
       generated_at:   new Date().toISOString(),
     },
   }
 
   const workouts: Omit<WorkoutInsert, 'plan_id'>[] = []
 
+  // Dev log: print variant rotation matrix
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`\n[planGenerator] ${totalWeeks}w plan · primary=${primary} · ${profile.training_days.join(',')}`)
+    for (let w = 1; w <= totalWeeks; w++) {
+      const { phase } = periodization[w - 1]
+      const ids = schedule.map(({ slot }) => {
+        const cats = resolveSlotCategories(slot, primary, phase)
+        return cats.map(cat => pickVariant(cat, w, phase).id).join('+')
+      })
+      console.log(`  Week ${String(w).padStart(2)} [${phase.padEnd(5)}] ${ids.join('  |  ')}`)
+    }
+    console.log('')
+  }
+
   for (let week = 1; week <= totalWeeks; week++) {
-    const mod      = WEEK_MODS[week - 1]
-    const isTaper  = mod.phase === 'taper'
+    const { phase, durationMod } = periodization[week - 1]
     const weekStart = addDays(startDate, (week - 1) * 7)
 
     for (const { dayOfWeek, slot } of schedule) {
-      const categories = resolveSlotCategories(slot, primary, week, isTaper)
-      const meta       = slotToMeta(slot, categories, primary, isTaper)
+      const categories  = resolveSlotCategories(slot, primary, phase)
+      const meta        = slotToMeta(slot, primary, phase)
       const workoutDate = addDays(weekStart, dayOfWeek - 1)
 
-      // Build blocks — one block per category, each picking its week variant
-      const blocks: WorkoutBlock[] = categories.map(cat => {
-        const variant = pickVariant(cat, week, isTaper)
-        return variantToBlock(variant, cat)
-      })
+      // Pick variant per category — rotates A→B→C→D by weekNum
+      const blocks: WorkoutBlock[] = categories.map(cat =>
+        variantToBlock(pickVariant(cat, week, phase), cat)
+      )
 
-      // Total duration = sum of chosen variant durations × week modifier
-      const rawDuration = categories.reduce((sum, cat) => {
-        const variant = pickVariant(cat, week, isTaper)
-        return sum + variant.duration
-      }, 0)
+      // day_type includes primary variant name so each week looks different in plan view
+      const primaryVariant = pickVariant(categories[0], week, phase)
+      const dayType = `${meta.slotLabel} · ${primaryVariant.name}`
+
+      const rawDuration = categories.reduce((sum, cat) =>
+        sum + pickVariant(cat, week, phase).duration, 0)
 
       workouts.push({
         user_id:          userId,
         scheduled_date:   toDateStr(workoutDate),
         week_number:      week,
-        day_type:         meta.label,
+        day_type:         dayType,
         blocks,
-        duration_minutes: Math.round(rawDuration * mod.durationMod),
+        duration_minutes: Math.round(rawDuration * durationMod),
         intensity:        meta.intensity,
         goals_tags:       meta.goalsTags,
         is_rest_day:      false,

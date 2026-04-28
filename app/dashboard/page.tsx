@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ChevronRight, Zap, Dumbbell, TrendingUp, Activity } from 'lucide-react'
 import { getWorkoutCategory, getCategoryColor, getGreeting, formatGoalTag } from '@/lib/workout-utils'
 import { getCoachMessage } from '@/lib/coach'
+import { PHASE_LABELS, type TrainingPhase } from '@/lib/planGenerator'
 
 function WorkoutIcon({ category, size = 28 }: { category: string; size?: number }) {
   const cls = `text-current`
@@ -33,7 +34,7 @@ export default async function TodayPage() {
       .maybeSingle(),
     supabase
       .from('plans')
-      .select('id, start_date, end_date, total_weeks')
+      .select('id, start_date, end_date, total_weeks, structure')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -43,8 +44,6 @@ export default async function TodayPage() {
   const firstName = profileRes.data?.first_name ?? ''
   const greeting  = getGreeting(hour)
   const plan      = planRes.data
-
-  const coachMessage = await getCoachMessage(user.id).catch(() => null)
 
   // Active plan week: derive week_number from plan start_date so the counter
   // always reflects the plan's cadence, not the calendar week.
@@ -57,6 +56,12 @@ export default async function TodayPage() {
       ? 1
       : Math.min(Math.floor(daysDiff / 7) + 1, plan.total_weeks)
   }
+
+  // Derive current training phase from plan.structure.phase_map
+  const phaseMap = (plan?.structure as Record<string, unknown> | null)?.phase_map as Record<string, string> | undefined
+  const currentPhase = (phaseMap?.[String(activeWeek)] ?? null) as TrainingPhase | null
+
+  const coachMessage = await getCoachMessage(user.id, currentPhase).catch(() => null)
 
   // Fetch workouts for the active week, then check which are completed
   const weekWorkoutsRes = await supabase
@@ -198,9 +203,16 @@ export default async function TodayPage() {
       {plan && (
         <div className="bg-[#141414] border border-[#222222] rounded-2xl p-5 mb-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-white font-semibold text-sm">
-              Semana {activeWeek}
-            </p>
+            <div>
+              <p className="text-white font-semibold text-sm">
+                Semana {activeWeek} de {plan.total_weeks}
+              </p>
+              {currentPhase && (
+                <p className="text-[#C8FF00] text-xs font-bold tracking-widest mt-0.5">
+                  Fase {PHASE_LABELS[currentPhase]}
+                </p>
+              )}
+            </div>
             <span className="text-[#C8FF00] font-bold text-sm">
               {weekCompleted} / {weekTotal}
             </span>

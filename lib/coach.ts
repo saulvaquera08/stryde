@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { PHASE_LABELS, type TrainingPhase } from '@/lib/planGenerator'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -8,6 +9,7 @@ interface CoachContext {
   firstName: string
   activeWeek: number
   totalWeeks: number
+  currentPhase: TrainingPhase | null
   todayWorkout: { day_type: string; duration_minutes: number | null; intensity: string } | null
   nextWorkout: { day_type: string; scheduled_date: string } | null
   recentCompleted: { day_type: string; rating: number | null; completed_at: string }[]
@@ -25,7 +27,7 @@ async function buildContext(userId: string): Promise<CoachContext> {
     supabase.from('users').select('first_name').eq('id', userId).single(),
     supabase
       .from('plans')
-      .select('id, start_date, end_date, total_weeks')
+      .select('id, start_date, end_date, total_weeks, structure')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -46,11 +48,14 @@ async function buildContext(userId: string): Promise<CoachContext> {
   const plan = planRes.data
   let activeWeek = 1
   let totalWeeks = 0
+  let currentPhase: TrainingPhase | null = null
   if (plan) {
     const planStart = new Date(plan.start_date + 'T00:00:00')
     const daysDiff = Math.floor((Date.now() - planStart.getTime()) / 86_400_000)
     activeWeek = daysDiff < 0 ? 1 : Math.min(Math.floor(daysDiff / 7) + 1, plan.total_weeks)
     totalWeeks = plan.total_weeks
+    const phaseMap = (plan.structure as Record<string, unknown> | null)?.phase_map as Record<string, string> | undefined
+    currentPhase = (phaseMap?.[String(activeWeek)] ?? null) as TrainingPhase | null
   }
 
   // Recent completed workouts with ratings
@@ -107,6 +112,7 @@ async function buildContext(userId: string): Promise<CoachContext> {
     firstName: profileRes.data?.first_name ?? 'Atleta',
     activeWeek,
     totalWeeks,
+    currentPhase,
     todayWorkout: todayRes.data ?? null,
     nextWorkout,
     recentCompleted,
@@ -119,7 +125,19 @@ function buildPrompt(ctx: CoachContext): string {
   const lines: string[] = []
 
   lines.push(`Atleta: ${ctx.firstName}`)
-  if (ctx.totalWeeks > 0) lines.push(`Semana de entrenamiento: ${ctx.activeWeek} de ${ctx.totalWeeks}`)
+  if (ctx.totalWeeks > 0) {
+    const phaseLabel = ctx.currentPhase ? ` · Fase ${PHASE_LABELS[ctx.currentPhase]}` : ''
+    lines.push(`Semana de entrenamiento: ${ctx.activeWeek} de ${ctx.totalWeeks}${phaseLabel}`)
+  }
+  if (ctx.currentPhase) {
+    const phaseDesc: Record<string, string> = {
+      base:  'Fase BASE — construir base aeróbica y fuerza general, volumen moderado',
+      build: 'Fase BUILD — aumentar volumen semana a semana, más intervalos y sesiones específicas',
+      peak:  'Fase PEAK — volumen máximo, simulaciones de competencia, largo runs intensos',
+      taper: 'Fase TAPER — reducir volumen, mantener intensidad, preparar el cuerpo para competir',
+    }
+    lines.push(phaseDesc[ctx.currentPhase] ?? '')
+  }
   if (ctx.goals.length > 0) lines.push(`Objetivos activos: ${ctx.goals.join(', ')}`)
   if (ctx.daysToRace !== null) lines.push(`Días para la próxima carrera: ${ctx.daysToRace}`)
 
@@ -149,7 +167,7 @@ function buildPrompt(ctx: CoachContext): string {
   return lines.join('\n')
 }
 
-export async function getCoachMessage(userId: string): Promise<string> {
+export async function getCoachMessage(userId: string, phase?: TrainingPhase | null): Promise<string> {
   const supabase = await createClient()
 
   // Check last message to avoid repetition
