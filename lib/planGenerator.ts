@@ -222,9 +222,16 @@ function buildSchedule(trainingDays: string[]): { dayOfWeek: number; slot: SlotK
 // ─── Duration calculation ─────────────────────────────────────────────────────
 
 export function calcTotalWeeks(goals: PlanProfile['goals']): number {
+  // Use plan start (next Monday) so the race_date falls in the final (taper) week.
+  const planStart = getNextMonday()
+
   const upcoming = goals
     .filter(g => g.race_date)
-    .map(g => Math.ceil((new Date(g.race_date!).getTime() - Date.now()) / (7 * 86_400_000)))
+    .map(g => {
+      const raceDate = new Date(g.race_date! + 'T12:00:00')
+      const daysDiff = Math.floor((raceDate.getTime() - planStart.getTime()) / 86_400_000)
+      return daysDiff > 0 ? Math.floor(daysDiff / 7) + 1 : 0
+    })
     .filter(w => w > 1)
     .sort((a, b) => a - b)
 
