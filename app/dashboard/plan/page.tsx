@@ -104,7 +104,7 @@ export default async function PlanPage({
               <div
                 className={`w-full aspect-square rounded-xl flex items-center justify-center text-xs font-bold border transition-all ${
                   isToday
-                    ? 'border-[#C8FF00] text-[#C8FF00]'
+                    ? 'border-[#C8FF00] bg-[#C8FF00] text-black'
                     : isDone
                     ? 'border-[#2A3A00] bg-[#C8FF00]/10 text-[#C8FF00]'
                     : workout && !workout.is_rest_day

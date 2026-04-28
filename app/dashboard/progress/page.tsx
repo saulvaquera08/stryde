@@ -1,177 +1,138 @@
-'use client'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import ProgressClient from './ProgressClient'
 
-import { useState } from 'react'
-import { TrendingUp, Dumbbell, Flame } from 'lucide-react'
-
-type Tab = 'week' | 'month' | 'year'
-
-// Placeholder data — replace with real DB queries when completed_workouts fills up
-const MOCK = {
-  week: {
-    runDays:    [0, 45, 0, 38, 0, 52, 0],
-    volumeBars: [0, 48, 0, 52, 0, 60, 0],
-    pace:       '5:42',
-    strength:   1840,
-    workouts:   3,
-  },
-  month: {
-    runDays:    [32, 45, 38, 52, 40, 55, 48, 60, 42, 58, 35, 50],
-    volumeBars: [40, 48, 52, 60, 44, 56, 50, 62, 45, 58, 38, 52],
-    pace:       '5:38',
-    strength:   7200,
-    workouts:   14,
-  },
-  year: {
-    runDays:    [30, 35, 42, 50, 45, 55, 60, 52, 48, 58, 44, 62],
-    volumeBars: [35, 42, 48, 55, 50, 60, 65, 58, 52, 62, 48, 68],
-    pace:       '5:52',
-    strength:   38400,
-    workouts:   58,
-  },
+interface CompletedRow {
+  workout_id: string
+  rating: number | null
+  completed_at: string
 }
 
-function LineChart({ values, color = '#C8FF00' }: { values: number[]; color?: string }) {
-  if (!values.length) return null
-  const max  = Math.max(...values, 1)
-  const w    = 100 / (values.length - 1)
-  const pts  = values.map((v, i) => `${i * w},${100 - (v / max) * 80}`).join(' ')
-  const area = `0,100 ${pts} ${(values.length - 1) * w},100`
+interface WorkoutRow {
+  id: string
+  duration_minutes: number | null
+}
 
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-24">
-      <defs>
-        <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0"    />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#grad)" />
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
+function startOfWeekMonday(ref: Date): Date {
+  const d = new Date(ref)
+  const day = d.getDay()
+  d.setDate(d.getDate() - ((day + 6) % 7))
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+export default async function ProgressPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const oneYearAgo = new Date(Date.now() - 366 * 86_400_000).toISOString()
+
+  const [completedRes, workoutsRes] = await Promise.all([
+    supabase
+      .from('completed_workouts')
+      .select('workout_id, rating, completed_at')
+      .eq('user_id', user.id)
+      .gte('completed_at', oneYearAgo)
+      .order('completed_at', { ascending: true }),
+    supabase
+      .from('workouts')
+      .select('id, duration_minutes')
+      .eq('user_id', user.id),
+  ])
+
+  const completed: CompletedRow[] = completedRes.data ?? []
+  const workoutMap = new Map<string, number>(
+    (workoutsRes.data ?? [] as WorkoutRow[]).map((w: WorkoutRow) => [w.id, w.duration_minutes ?? 0])
+  )
+
+  const hasData = completed.length > 0
+
+  const empty = { sessions: 0, minutes: 0, avgRating: null }
+
+  if (!hasData) {
+    return (
+      <ProgressClient
+        hasData={false}
+        bars={{ week: Array(7).fill(0), month: Array(4).fill(0), year: Array(12).fill(0) }}
+        stats={{ week: empty, month: empty, year: empty }}
       />
-      {values.map((v, i) => (
-        <circle
-          key={i}
-          cx={i * w}
-          cy={100 - (v / max) * 80}
-          r="2.5"
-          fill={color}
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-    </svg>
-  )
-}
+    )
+  }
 
-function BarChart({ values, color = '#C8FF00' }: { values: number[]; color?: string }) {
-  if (!values.length) return null
-  const max = Math.max(...values, 1)
-  const gap = 4
-  const bw  = (100 - gap * (values.length - 1)) / values.length
+  const now = new Date()
+  const todayStr = now.toISOString().split('T')[0]
 
-  return (
-    <svg viewBox={`0 0 100 60`} preserveAspectRatio="none" className="w-full h-16">
-      {values.map((v, i) => {
-        const h = (v / max) * 50
-        const x = i * (bw + gap)
-        return (
-          <rect
-            key={i}
-            x={x}
-            y={60 - h}
-            width={bw}
-            height={h}
-            rx="2"
-            fill={color}
-            fillOpacity={v > 0 ? 0.85 : 0.15}
-          />
-        )
-      })}
-    </svg>
-  )
-}
+  // ── Week bars: current Mon→Sun ──────────────────────────────────────────────
+  const weekStart = startOfWeekMonday(now)
+  const weekBars = Array(7).fill(0)
 
-export default function ProgressPage() {
-  const [tab, setTab] = useState<Tab>('week')
-  const data = MOCK[tab]
+  // ── Month bars: last 4 complete weeks ──────────────────────────────────────
+  const monthBars = Array(4).fill(0)
+  const fourWeeksAgo = new Date(weekStart)
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 21)
 
-  const tabLabel: Record<Tab, string> = {
-    week:  'Semana',
-    month: 'Mes',
-    year:  'Año',
+  // ── Year bars: last 12 calendar months ─────────────────────────────────────
+  const yearBars = Array(12).fill(0)
+  const yearStats = { sessions: 0, minutes: 0, ratings: [] as number[] }
+  const monthStats = { sessions: 0, minutes: 0, ratings: [] as number[] }
+  const weekStats  = { sessions: 0, minutes: 0, ratings: [] as number[] }
+
+  for (const row of completed) {
+    const ts  = new Date(row.completed_at)
+    const dur = workoutMap.get(row.workout_id) ?? 0
+
+    // Year (last 12 months index 0=oldest, 11=current)
+    const monthDiff = (now.getFullYear() - ts.getFullYear()) * 12 + (now.getMonth() - ts.getMonth())
+    if (monthDiff >= 0 && monthDiff < 12) {
+      const idx = 11 - monthDiff
+      yearBars[idx] += dur
+      yearStats.sessions++
+      yearStats.minutes += dur
+      if (row.rating !== null) yearStats.ratings.push(row.rating)
+    }
+
+    // Month (last 4 weeks)
+    const rowDate = ts.toISOString().split('T')[0]
+    if (rowDate >= fourWeeksAgo.toISOString().split('T')[0] && rowDate <= todayStr) {
+      const daysDiff = Math.floor((ts.getTime() - fourWeeksAgo.getTime()) / 86_400_000)
+      const weekIdx  = Math.min(Math.floor(daysDiff / 7), 3)
+      monthBars[weekIdx] += dur
+      monthStats.sessions++
+      monthStats.minutes += dur
+      if (row.rating !== null) monthStats.ratings.push(row.rating)
+    }
+
+    // Week (current Mon-Sun)
+    const weekStartStr = weekStart.toISOString().split('T')[0]
+    const weekEndDate  = new Date(weekStart)
+    weekEndDate.setDate(weekEndDate.getDate() + 6)
+    const weekEndStr = weekEndDate.toISOString().split('T')[0]
+    if (rowDate >= weekStartStr && rowDate <= weekEndStr) {
+      const dayIdx = Math.floor((ts.getTime() - weekStart.getTime()) / 86_400_000)
+      if (dayIdx >= 0 && dayIdx < 7) {
+        weekBars[dayIdx] += dur
+        weekStats.sessions++
+        weekStats.minutes += dur
+        if (row.rating !== null) weekStats.ratings.push(row.rating)
+      }
+    }
+  }
+
+  function avg(arr: number[]): number | null {
+    if (!arr.length) return null
+    return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10
   }
 
   return (
-    <div className="px-5 pt-12">
-      <h1 className="text-2xl font-bold text-white mb-6">Progreso</h1>
-
-      {/* Tabs */}
-      <div className="flex bg-[#141414] border border-[#222222] rounded-xl p-1 mb-6">
-        {(['week', 'month', 'year'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-              tab === t
-                ? 'bg-[#C8FF00] text-black'
-                : 'text-[#555555] hover:text-white'
-            }`}
-          >
-            {tabLabel[t]}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-[#141414] border border-[#222222] rounded-2xl p-4">
-          <TrendingUp size={16} className="text-[#C8FF00] mb-2" />
-          <p className="text-white font-bold text-lg">{data.pace}</p>
-          <p className="text-[#555555] text-xs">min/km</p>
-        </div>
-        <div className="bg-[#141414] border border-[#222222] rounded-2xl p-4">
-          <Dumbbell size={16} className="text-[#A78BFA] mb-2" />
-          <p className="text-white font-bold text-lg">
-            {data.strength >= 1000 ? `${(data.strength / 1000).toFixed(1)}t` : `${data.strength}`}
-          </p>
-          <p className="text-[#555555] text-xs">volumen kg</p>
-        </div>
-        <div className="bg-[#141414] border border-[#222222] rounded-2xl p-4">
-          <Flame size={16} className="text-[#FF6B35] mb-2" />
-          <p className="text-white font-bold text-lg">{data.workouts}</p>
-          <p className="text-[#555555] text-xs">sesiones</p>
-        </div>
-      </div>
-
-      {/* Running pace chart */}
-      <div className="bg-[#141414] border border-[#222222] rounded-2xl p-5 mb-4">
-        <p className="text-white font-semibold text-sm mb-1">Ritmo de carrera</p>
-        <p className="text-[#555555] text-xs mb-4">Promedio min/km</p>
-        <LineChart values={data.runDays} color="#C8FF00" />
-      </div>
-
-      {/* Volume bars */}
-      <div className="bg-[#141414] border border-[#222222] rounded-2xl p-5 mb-4">
-        <p className="text-white font-semibold text-sm mb-1">Volumen semanal</p>
-        <p className="text-[#555555] text-xs mb-4">Minutos activos</p>
-        <BarChart values={data.volumeBars} color="#C8FF00" />
-      </div>
-
-      {/* Empty state note */}
-      <div className="bg-[#0C1400] border border-[#C8FF00]/15 rounded-xl p-4">
-        <p className="text-[#C8FF00] text-xs font-semibold uppercase tracking-widest mb-1">
-          Datos reales
-        </p>
-        <p className="text-[#888888] text-xs leading-relaxed">
-          Las gráficas mostrarán tus datos reales a medida que completes entrenamientos.
-        </p>
-      </div>
-    </div>
+    <ProgressClient
+      hasData={true}
+      bars={{ week: weekBars, month: monthBars, year: yearBars }}
+      stats={{
+        week:  { sessions: weekStats.sessions,  minutes: weekStats.minutes,  avgRating: avg(weekStats.ratings)  },
+        month: { sessions: monthStats.sessions, minutes: monthStats.minutes, avgRating: avg(monthStats.ratings) },
+        year:  { sessions: yearStats.sessions,  minutes: yearStats.minutes,  avgRating: avg(yearStats.ratings)  },
+      }}
+    />
   )
 }

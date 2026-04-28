@@ -110,7 +110,7 @@ export default async function TodayPage() {
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#888888] text-sm mb-1">{greeting},</p>
-        <h1 className="text-[2rem] font-bold text-white leading-tight">
+        <h1 className="text-[2.25rem] font-bold text-white leading-tight">
           {firstName || 'Atleta'}.
         </h1>
       </div>
@@ -183,7 +183,7 @@ export default async function TodayPage() {
           ) : (
             <Link
               href={`/dashboard/workout/${nextWorkout.id}`}
-              className="flex items-center justify-center gap-2 w-full font-bold py-3.5 rounded-xl text-black text-sm transition-all active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 w-full font-bold min-h-[56px] rounded-xl text-black text-sm transition-all active:scale-[0.98]"
               style={{ background: '#C8FF00' }}
             >
               START WORKOUT
