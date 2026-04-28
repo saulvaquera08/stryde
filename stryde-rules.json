@@ -9,31 +9,31 @@
   "weekly_structure": {
     "day_1": {
       "label": "Strength Lower + Intervals",
-      "blocks": ["lower_heavy", "explosive_power", "short_intervals"],
+      "blocks": ["strength_lower", "intervals"],
       "intensity": "high",
       "goal": "Power + lactate tolerance"
     },
     "day_2": {
       "label": "Z2 Run + Accessory",
-      "blocks": ["zone2_run", "core", "mobility"],
+      "blocks": ["zone2_run"],
       "intensity": "low",
       "goal": "Aerobic base + active recovery"
     },
     "day_3": {
       "label": "HYROX Simulation",
-      "blocks": ["run_sled", "run_burpees", "run_lunges"],
+      "blocks": ["hyrox_simulation"],
       "intensity": "high",
       "goal": "Race specificity"
     },
     "day_4": {
       "label": "Upper Strength + Tempo",
-      "blocks": ["upper_push_pull", "tempo_run"],
+      "blocks": ["strength_upper", "tempo"],
       "intensity": "moderate",
       "goal": "Sustained effort"
     },
     "day_5": {
       "label": "Long Endurance",
-      "blocks": ["long_run_or_hybrid"],
+      "blocks": ["long_run"],
       "intensity": "moderate",
       "goal": "Long endurance"
     }
@@ -71,46 +71,343 @@
       "increase": ["running_volume", "tempo_runs"]
     }
   },
-  "workout_templates": {
-    "lower_heavy": {
-      "exercises": ["Deadlift 4x5", "Bulgarian split squat 3x8", "Romanian deadlift 3x10"],
-      "rest": "2-3 min"
+  "workout_library": {
+
+    "strength_lower": [
+      {
+        "id": "SL_A",
+        "name": "Power Lower A",
+        "exercises": [
+          "Deadlift 4x5 @80%",
+          "Bulgarian split squat 3x8 cada pierna",
+          "Romanian deadlift 3x10",
+          "Box jumps 4x5"
+        ],
+        "rest": "2-3 min pesados / 90s accesorios",
+        "duration": 55,
+        "notes": "Fuerza primero, potencia al final"
+      },
+      {
+        "id": "SL_B",
+        "name": "Power Lower B",
+        "exercises": [
+          "Back squat 4x5 @80%",
+          "Step-ups con mancuernas 3x10",
+          "Good mornings 3x12",
+          "Broad jumps 3x4"
+        ],
+        "rest": "2-3 min / 90s",
+        "duration": 55
+      },
+      {
+        "id": "SL_C",
+        "name": "Strength Endurance Lower",
+        "exercises": [
+          "Front squat 4x6",
+          "Walking lunges con carga 4x12",
+          "Single leg RDL 3x10",
+          "Saltos al cajón 3x6"
+        ],
+        "rest": "90s",
+        "duration": 50
+      },
+      {
+        "id": "SL_D",
+        "name": "Posterior Chain Focus",
+        "exercises": [
+          "Sumo deadlift 4x5",
+          "Hip thrust 4x10",
+          "Nordic curl 3x6",
+          "Kettlebell swing 4x15"
+        ],
+        "rest": "2 min / 60s",
+        "duration": 50
+      }
+    ],
+
+    "strength_upper": [
+      {
+        "id": "SU_A",
+        "name": "Push/Pull A",
+        "exercises": [
+          "Bench press 4x6",
+          "Pull-ups 4x6",
+          "DB shoulder press 3x10",
+          "Cable row 3x10",
+          "Tricep dips 2x12"
+        ],
+        "rest": "90s",
+        "duration": 52
+      },
+      {
+        "id": "SU_B",
+        "name": "Push/Pull B",
+        "exercises": [
+          "Incline DB press 4x8",
+          "Barbell row 4x6",
+          "Arnold press 3x10",
+          "Face pulls 3x15",
+          "Chin-ups 3x max"
+        ],
+        "rest": "90s",
+        "duration": 50
+      },
+      {
+        "id": "SU_C",
+        "name": "Upper Endurance",
+        "exercises": [
+          "Push-ups 4x20",
+          "TRX row 4x15",
+          "Farmer carry 4x40m",
+          "Battle ropes 4x30s",
+          "Hollow body hold 3x30s"
+        ],
+        "rest": "60s",
+        "duration": 45,
+        "notes": "Alta repetición, simula fatiga HYROX"
+      }
+    ],
+
+    "hyrox_simulation": [
+      {
+        "id": "HX_A",
+        "name": "HYROX Full Sim",
+        "format": "8 rounds: 400m run + 1 station",
+        "stations": [
+          "SkiErg 250m (o remo)",
+          "Sled push 25m (o empuje de placa)",
+          "Sled pull 25m (o banda resistencia)",
+          "Burpee broad jumps 20m",
+          "Remo 250m",
+          "Farmer carry 50m",
+          "Walking lunges con saco 25m",
+          "Wall balls 25 reps"
+        ],
+        "duration": 75,
+        "intensity": "high",
+        "notes": "Simula la carrera completa — pacing crítico"
+      },
+      {
+        "id": "HX_B",
+        "name": "HYROX Half Sim",
+        "format": "4 rounds: 400m run + 1 station (primeras 4)",
+        "stations": [
+          "SkiErg 250m",
+          "Sled push/pull 25m",
+          "Burpee broad jumps 20m",
+          "Farmer carry 50m"
+        ],
+        "duration": 50,
+        "intensity": "high"
+      },
+      {
+        "id": "HX_C",
+        "name": "HYROX Stations Only",
+        "format": "Circuito sin correr — foco en técnica y resistencia muscular",
+        "exercises": [
+          "SkiErg 500m",
+          "Sled push 50m",
+          "Burpees 20 reps",
+          "Farmer carry 80m",
+          "Wall balls 30 reps",
+          "Walking lunges 50m"
+        ],
+        "rounds": 3,
+        "rest": "90s entre estaciones",
+        "duration": 48,
+        "intensity": "moderate"
+      },
+      {
+        "id": "HX_D",
+        "name": "Run + Fatigue",
+        "format": "Carrera con estaciones intercaladas — simula fatiga acumulada",
+        "blocks": [
+          "1km tempo + 15 burpees",
+          "1km tempo + 20 walking lunges",
+          "1km tempo + 30 wall balls",
+          "1km easy"
+        ],
+        "duration": 55,
+        "intensity": "high",
+        "notes": "Entrena como compites: run + fatigue muscular"
+      }
+    ],
+
+    "zone2_run": [
+      {
+        "id": "Z2_A",
+        "name": "Easy Base Run",
+        "duration": 45,
+        "pace": "Z2 — RPE 3-4, puedes mantener conversación",
+        "hr_zone": 2
+      },
+      {
+        "id": "Z2_B",
+        "name": "Easy Run + Drills",
+        "duration": 50,
+        "structure": "35 min Z2 + 10 min drills (A-skip, B-skip, strides)",
+        "hr_zone": 2
+      },
+      {
+        "id": "Z2_C",
+        "name": "Z2 + Core",
+        "duration": 55,
+        "structure": "40 min Z2 + 15 min core (plank, dead bug, bird dog)",
+        "hr_zone": 2
+      },
+      {
+        "id": "Z2_D",
+        "name": "Easy Run + Mobility",
+        "duration": 60,
+        "structure": "45 min Z2 + 15 min movilidad dinámica",
+        "hr_zone": 2
+      }
+    ],
+
+    "intervals": [
+      {
+        "id": "INT_A",
+        "name": "Track 400s",
+        "format": "Calentamiento 15 min + 6x400m al ritmo 5K + enfriamiento 10 min",
+        "rest": "90s entre repeticiones",
+        "pace": "RPE 8-9",
+        "duration": 50,
+        "intensity": "high",
+        "notes": "Mejora VO2max — clave para HYROX y 21K"
+      },
+      {
+        "id": "INT_B",
+        "name": "1K Repeats",
+        "format": "Calentamiento 15 min + 5x1000m + enfriamiento 10 min",
+        "rest": "2 min entre repeticiones",
+        "pace": "RPE 8, ritmo 10K objetivo",
+        "duration": 55,
+        "intensity": "high"
+      },
+      {
+        "id": "INT_C",
+        "name": "Pyramid Intervals",
+        "format": "400m + 800m + 1200m + 800m + 400m",
+        "rest": "90s-2min según distancia",
+        "pace": "RPE 8-9",
+        "duration": 55,
+        "intensity": "high"
+      },
+      {
+        "id": "INT_D",
+        "name": "Short Speed",
+        "format": "Calentamiento 15 min + 10x200m + enfriamiento",
+        "rest": "60s",
+        "pace": "RPE 9, sprint controlado",
+        "duration": 45,
+        "intensity": "high",
+        "notes": "Potencia + economía de carrera"
+      },
+      {
+        "id": "INT_E",
+        "name": "Fartlek",
+        "format": "30 min: alterna 2 min rápido / 3 min fácil",
+        "duration": 45,
+        "intensity": "moderate-high",
+        "notes": "Versión no estructurada de intervalos — bueno para variedad"
+      }
+    ],
+
+    "tempo": [
+      {
+        "id": "TMP_A",
+        "name": "Classic Tempo",
+        "format": "15 min easy + 25 min tempo continuo + 10 min easy",
+        "pace": "RPE 7 — comfortably hard, puedes decir frases cortas",
+        "duration": 50,
+        "intensity": "moderate"
+      },
+      {
+        "id": "TMP_B",
+        "name": "Cruise Intervals",
+        "format": "3x10 min tempo con 2 min descanso",
+        "pace": "RPE 7",
+        "duration": 50,
+        "intensity": "moderate"
+      },
+      {
+        "id": "TMP_C",
+        "name": "Progressive Tempo",
+        "format": "20 min: empieza Z2, termina Z3-4 los últimos 5 min",
+        "duration": 40,
+        "intensity": "moderate",
+        "notes": "Bueno para semanas de menor carga"
+      }
+    ],
+
+    "long_run": [
+      {
+        "id": "LR_A",
+        "name": "Easy Long Run",
+        "duration": 70,
+        "pace": "Z2 todo — RPE 5",
+        "intensity": "low"
+      },
+      {
+        "id": "LR_B",
+        "name": "Long Run + Finish Fast",
+        "duration": 75,
+        "structure": "60 min Z2 + últimos 15 min a tempo",
+        "intensity": "moderate",
+        "notes": "Simula el final de carrera con piernas cansadas"
+      },
+      {
+        "id": "LR_C",
+        "name": "Long Run + Strides",
+        "duration": 80,
+        "structure": "65 min Z2 + 6 strides de 20s al final",
+        "intensity": "low-moderate"
+      },
+      {
+        "id": "LR_D",
+        "name": "Hybrid Long",
+        "duration": 75,
+        "structure": "45 min Z2 + 3 rondas (5 min Z3 + 5 min Z2)",
+        "intensity": "moderate",
+        "notes": "Para fase HYROX — mantiene base de 21K"
+      }
+    ],
+
+    "recovery": [
+      {
+        "id": "REC_A",
+        "name": "Active Recovery",
+        "structure": "20 min caminata o bici suave + 20 min foam rolling + 10 min stretching",
+        "duration": 50,
+        "intensity": "very_low"
+      },
+      {
+        "id": "REC_B",
+        "name": "Mobility Flow",
+        "structure": "30 min movilidad dinámica + 15 min yoga básico",
+        "duration": 45,
+        "intensity": "very_low"
+      }
+    ]
+  },
+
+  "weekly_rotation": {
+    "description": "Rotar variantes A/B/C/D para que nunca se repita el mismo workout dos semanas seguidas",
+    "rule": "semana_1=A, semana_2=B, semana_3=C, semana_4=D, semana_5=A+10%_volumen, semana_6=taper"
+  },
+
+  "zone_distribution": {
+    "hyrox":          { "z1_z2": "50%", "z3": "25%", "z4_z5": "25%" },
+    "half_marathon":  { "z1_z2": "75%", "z3": "15%", "z4_z5": "10%" },
+    "combined":       { "z1_z2": "65%", "z3": "15%", "z4_z5": "20%" }
+  },
+
+  "concurrent_training_rules": {
+    "max_concurrent_sessions_per_week": 3,
+    "order_when_same_day": {
+      "priority_strength":  "fuerza primero, cardio después",
+      "priority_endurance": "cardio primero, fuerza después"
     },
-    "explosive_power": {
-      "exercises": ["Box jumps 4x5", "Broad jumps 3x4"],
-      "rest": "90 sec"
-    },
-    "short_intervals": {
-      "format": "6x400m",
-      "rest": "90 sec between reps",
-      "pace": "5K race pace"
-    },
-    "zone2_run": {
-      "duration_min": 40,
-      "duration_max": 60,
-      "hr_zone": 2,
-      "rpe": "3-4/10"
-    },
-    "hyrox_simulation": {
-      "rounds": 4,
-      "format": "200m run + station",
-      "stations": ["sled_push_alt", "burpees_over_bar", "walking_lunges", "sandbag_carry_alt"]
-    },
-    "upper_push_pull": {
-      "exercises": ["Bench press 4x6", "Pull-ups 4x6", "DB shoulder press 3x10", "Cable row 3x10"],
-      "rest": "90 sec"
-    },
-    "tempo_run": {
-      "duration_min": 20,
-      "duration_max": 30,
-      "rpe": "7/10",
-      "description": "Comfortably hard, can say short sentences"
-    },
-    "long_run": {
-      "duration_min": 60,
-      "duration_max": 90,
-      "hr_zone": 2,
-      "rpe": "5/10"
-    }
+    "avoid": "fuerza al fallo + cardio alta intensidad en misma sesión"
   }
 }]
