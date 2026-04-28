@@ -10,6 +10,7 @@ export function getDayTypeLabel(dayType: string): string {
     case 'hyrox_day':          return 'HYROX'
     case 'race_day':           return 'RACE DAY'
     case 'rest_day':           return 'DESCANSO'
+    case 'recovery_day':       return 'RECUPERACIÓN'
     default:                   return dayType.toUpperCase().replace(/_/g, ' ')
   }
 }
@@ -21,6 +22,7 @@ export function getDayTypeColor(dayType: string): string {
     case 'run_day':            return '#C8FF00'
     case 'hyrox_day':
     case 'race_day':           return '#FF6B35'
+    case 'recovery_day':       return '#888888'
     default:                   return '#444444'
   }
 }

@@ -5,9 +5,9 @@ type WorkoutInsert = Database['public']['Tables']['workouts']['Insert']
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
-export type DayType = 'strength_lower_day' | 'strength_upper_day' | 'run_day' | 'hyrox_day' | 'rest_day' | 'race_day'
+export type DayType = 'strength_lower_day' | 'strength_upper_day' | 'run_day' | 'hyrox_day' | 'rest_day' | 'race_day' | 'recovery_day'
 
-export type TrainingPhase = 'base' | 'build' | 'specific' | 'peak' | 'taper'
+export type TrainingPhase = 'base' | 'build' | 'specific' | 'peak' | 'taper' | 'recovery'
 
 export const PHASE_LABELS: Record<TrainingPhase, string> = {
   base:     'BASE',
@@ -15,6 +15,7 @@ export const PHASE_LABELS: Record<TrainingPhase, string> = {
   specific: 'SPECIFIC',
   peak:     'PEAK',
   taper:    'TAPER',
+  recovery: 'RECUPERACIÓN',
 }
 
 export const PHASE_COLORS: Record<TrainingPhase, string> = {
@@ -23,6 +24,7 @@ export const PHASE_COLORS: Record<TrainingPhase, string> = {
   specific: '#A78BFA',
   peak:     '#FF6B35',
   taper:    '#C8FF00',
+  recovery: '#888888',
 }
 
 export interface PlanProfile {
@@ -142,6 +144,30 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
     { id: 'LR_B', name: 'Long Run + Finish Fast', duration: 75, subtitle: '60 min Z2 · 15 min tempo', format: '60 min Z2 · últimos 15 min a ritmo tempo' },
     { id: 'LR_C', name: 'Long Run + Strides',     duration: 80, subtitle: '65 min Z2 · strides',      format: '65 min Z2 · 6 strides de 20s al final' },
     { id: 'LR_D', name: 'Hybrid Long',            duration: 75, subtitle: '45 min Z2 + bloques Z3',   format: '45 min Z2 · 3×(5 min Z3 + 5 min Z2)' },
+  ],
+
+  // ── Recovery (movilidad suave, sin carga) ───────────────────────────────
+  recovery: [
+    {
+      id: 'REC_A', name: 'Active Recovery', duration: 30,
+      subtitle: 'Caminata + foam rolling',
+      format: '20 min caminata suave + 10 min foam rolling y estiramientos',
+    },
+    {
+      id: 'REC_B', name: 'Mobility Flow', duration: 30,
+      subtitle: '30 min movilidad suave',
+      format: '15 min movilidad dinámica + 15 min estiramientos post-carrera',
+    },
+  ],
+
+  // ── Post-race short run (solo para semana de recuperación) ──────────────
+  run_recovery: [
+    {
+      id: 'Z2_SHORT', name: 'Easy Recovery Run', duration: 22,
+      subtitle: '20-25 min · sin presión de ritmo',
+      format: '20-25 min continuo Z2 muy suave — el objetivo es mover las piernas, no el tiempo',
+      hr_zone: 2,
+    },
   ],
 
   // ── HYROX (running + funcional juntos — único día que mezcla) ───────────
@@ -367,6 +393,7 @@ const GOALS_TAGS: Record<DayType, string[]> = {
   hyrox_day:          ['hyrox', 'race_specificity'],
   rest_day:           ['recovery'],
   race_day:           ['race'],
+  recovery_day:       ['recovery', 'mobility'],
 }
 
 // ─── Variant → WorkoutBlock ───────────────────────────────────────────────────
@@ -389,6 +416,7 @@ function variantToBlock(variant: LibraryVariant, dayType: DayType): WorkoutBlock
     hyrox_day:          'hyrox',
     rest_day:           'rest',
     race_day:           'cardio',
+    recovery_day:       'mobility',
   }
 
   const exercises: ExerciseItem[] | undefined =
@@ -421,7 +449,7 @@ export function validatePlan(
   }
 
   const byWeek = new Map<number, typeof workouts>()
-  for (const w of workouts.filter(w => !w.is_rest_day && w.day_type !== 'race_day')) {
+  for (const w of workouts.filter(w => !w.is_rest_day && w.day_type !== 'race_day' && w.day_type !== 'recovery_day')) {
     const wk = w.week_number ?? 0
     if (!byWeek.has(wk)) byWeek.set(wk, [])
     byWeek.get(wk)!.push(w)
@@ -552,7 +580,7 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
     }
   }
 
-  // Race day — closest upcoming goal with a race_date
+  // ── Race day + post-race recovery week ───────────────────────────────────
   const raceGoal = profile.goals
     .filter(g => g.race_date)
     .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0]
@@ -560,9 +588,8 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
   if (raceGoal?.race_date) {
     const raceDateStr = raceGoal.race_date
     if (raceDateStr >= toDateStr(startDate) && raceDateStr <= toDateStr(endDate)) {
-      const daysDiff = Math.floor(
-        (new Date(raceDateStr + 'T12:00:00').getTime() - startDate.getTime()) / 86_400_000
-      )
+      const raceDate = new Date(raceDateStr + 'T12:00:00')
+      const daysDiff = Math.floor((raceDate.getTime() - startDate.getTime()) / 86_400_000)
       const raceWeek = Math.min(Math.floor(daysDiff / 7) + 1, totalWeeks)
 
       // Replace any workout already on race date
@@ -586,6 +613,111 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
         goals_tags:       ['race'],
         is_rest_day:      false,
       })
+
+      // ── Post-race recovery week (7 days after race) ─────────────────────
+      // Fixed structure — ignores training_days. The body decides.
+      const recoveryWeek = totalWeeks + 1
+      const goalTag      = raceGoal.type
+
+      type RecoverySlot = {
+        offset: number
+        dayType: DayType
+        isRest: boolean
+        variantKey?: string
+        label?: string
+        format?: string
+        notes?: string
+        duration?: number
+      }
+
+      const recoverySlots: RecoverySlot[] = [
+        {
+          offset: 1,
+          dayType: 'rest_day',
+          isRest: true,
+          label: 'Descanso completo',
+          format: 'Descanso completo. Tu cuerpo lo necesita.',
+        },
+        {
+          offset: 2,
+          dayType: 'recovery_day',
+          isRest: false,
+          variantKey: 'REC_B',
+          notes: 'Movilidad suave. Sin impacto.',
+        },
+        {
+          offset: 3,
+          dayType: 'recovery_day',
+          isRest: false,
+          variantKey: 'REC_A',
+        },
+        {
+          offset: 4,
+          dayType: 'rest_day',
+          isRest: true,
+          label: 'Descanso',
+          format: 'Otro día de descanso. La recuperación es parte del entrenamiento.',
+        },
+        {
+          offset: 5,
+          dayType: 'run_day',
+          isRest: false,
+          variantKey: 'Z2_SHORT',
+          notes: 'Primer run post carrera. Muy suave, sin presión de ritmo.',
+        },
+        {
+          offset: 6,
+          dayType: 'recovery_day',
+          isRest: false,
+          variantKey: 'REC_B',
+        },
+        {
+          offset: 7,
+          dayType: 'rest_day',
+          isRest: true,
+          label: 'Fin de la recuperación',
+          format: '¿Listo para tu próximo objetivo?',
+        },
+      ]
+
+      const allRecoveryVariants: Record<string, LibraryVariant> = {
+        REC_A:    LIBRARY.recovery[0],
+        REC_B:    LIBRARY.recovery[1],
+        Z2_SHORT: LIBRARY.run_recovery[0],
+      }
+
+      for (const slot of recoverySlots) {
+        const slotDate = addDays(raceDate, slot.offset)
+        const variant  = slot.variantKey ? allRecoveryVariants[slot.variantKey] : null
+
+        workouts.push({
+          user_id:          userId,
+          scheduled_date:   toDateStr(slotDate),
+          week_number:      recoveryWeek,
+          day_type:         slot.dayType,
+          is_rest_day:      slot.isRest,
+          duration_minutes: variant ? variant.duration : 0,
+          intensity:        'low',
+          goals_tags:       ['recovery', goalTag],
+          blocks: slot.isRest
+            ? [{
+                type:   'rest',
+                label:  slot.label ?? 'Descanso',
+                format: slot.format,
+              }]
+            : variant
+            ? [variantToBlock(variant, slot.dayType)]
+            : [],
+        })
+      }
+
+      // Extend plan to cover recovery week
+      plan.total_weeks = recoveryWeek
+      plan.end_date    = toDateStr(addDays(raceDate, 7))
+      ;(plan.structure as Record<string, unknown>)['phase_map'] = {
+        ...(plan.structure as Record<string, unknown>)['phase_map'] as Record<string, string>,
+        [recoveryWeek]: 'recovery',
+      }
     }
   }
 

@@ -33,12 +33,75 @@ function RaceCountdown({
   plan: { total_weeks: number } | null
   activeWeek: number
 }) {
+  const now = Date.now()
+
+  // Check if we're in the post-race recovery window (race passed ≤ 7 days ago)
+  const recentlyRaced = goals
+    .filter(g => g.race_date)
+    .map(g => ({
+      type: g.type,
+      daysAfter: Math.floor((now - new Date(g.race_date! + 'T12:00:00').getTime()) / 86_400_000),
+    }))
+    .filter(g => g.daysAfter >= 0 && g.daysAfter <= 7)
+    .sort((a, b) => a.daysAfter - b.daysAfter)[0]
+
+  if (recentlyRaced) {
+    const goalLabel = GOAL_LABELS[recentlyRaced.type] ?? recentlyRaced.type.toUpperCase()
+    const isLastDay = recentlyRaced.daysAfter === 7
+    return (
+      <div className="mb-6">
+        <div className="bg-[#141414] border border-[#222222] rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm">✅</span>
+            <p className="text-white font-semibold text-sm">{goalLabel} completado</p>
+          </div>
+          <p className="text-[#555555] text-xs">Semana de recuperación — el cuerpo se adapta en el descanso.</p>
+          {isLastDay && (
+            <a
+              href="/onboarding"
+              className="mt-3 flex items-center justify-center w-full bg-[#C8FF00] text-black font-bold py-3 rounded-xl text-sm"
+            >
+              ¿Cuál es tu próximo objetivo? →
+            </a>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Check if race is more than 7 days past (show new-goal CTA)
+  const pastRace = goals
+    .filter(g => g.race_date)
+    .map(g => ({
+      type: g.type,
+      daysAfter: Math.floor((now - new Date(g.race_date! + 'T12:00:00').getTime()) / 86_400_000),
+    }))
+    .filter(g => g.daysAfter > 7)
+    .sort((a, b) => a.daysAfter - b.daysAfter)[0]
+
+  if (pastRace && !goals.some(g => g.race_date && new Date(g.race_date + 'T12:00:00').getTime() > now)) {
+    const goalLabel = GOAL_LABELS[pastRace.type] ?? pastRace.type.toUpperCase()
+    return (
+      <div className="mb-6 bg-[#141414] border border-[#222222] rounded-2xl p-4">
+        <p className="text-white font-semibold text-sm mb-1">✅ {goalLabel} completado</p>
+        <p className="text-[#555555] text-xs mb-3">Recuperación lista. ¿Cuál es el siguiente reto?</p>
+        <a
+          href="/onboarding"
+          className="flex items-center justify-center w-full bg-[#C8FF00] text-black font-bold py-3 rounded-xl text-sm"
+        >
+          Nuevo objetivo →
+        </a>
+      </div>
+    )
+  }
+
+  // Normal countdown for upcoming races
   const upcoming = goals
     .filter(g => g.race_date)
     .map(g => ({
       ...g,
       daysLeft: Math.ceil(
-        (new Date(g.race_date! + 'T12:00:00').getTime() - Date.now()) / 86_400_000
+        (new Date(g.race_date! + 'T12:00:00').getTime() - now) / 86_400_000
       ),
     }))
     .filter(g => g.daysLeft >= 0)
@@ -50,7 +113,6 @@ function RaceCountdown({
   const weeksLeft = Math.ceil(next.daysLeft / 7)
   const goalLabel = GOAL_LABELS[next.type] ?? next.type.toUpperCase()
 
-  // Race day
   if (next.daysLeft === 0) {
     return (
       <div className="mb-6 bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-2xl p-4 flex items-center gap-3">
@@ -80,15 +142,10 @@ function RaceCountdown({
         <p className="text-white text-sm font-semibold">
           {goalLabel}
           {upcoming.length > 1 && (
-            <span className="text-[#555555] text-xs font-normal ml-2">
-              +{upcoming.length - 1} más
-            </span>
+            <span className="text-[#555555] text-xs font-normal ml-2">+{upcoming.length - 1} más</span>
           )}
         </p>
-        <p
-          className={`text-sm font-bold${isUrgent ? ' animate-pulse' : ''}`}
-          style={{ color }}
-        >
+        <p className={`text-sm font-bold${isUrgent ? ' animate-pulse' : ''}`} style={{ color }}>
           {timeStr}{isUrgent ? ' 🔥' : ''}
         </p>
       </div>

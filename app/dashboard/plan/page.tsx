@@ -38,7 +38,7 @@ export default async function PlanPage({
   const [workoutsRes, completedRes] = await Promise.all([
     supabase
       .from('workouts')
-      .select('id, scheduled_date, day_type, duration_minutes, intensity, is_rest_day, goals_tags')
+      .select('id, scheduled_date, day_type, duration_minutes, intensity, is_rest_day, goals_tags, blocks')
       .eq('user_id', user.id)
       .gte('scheduled_date', rangeStart)
       .lte('scheduled_date', rangeEnd)
@@ -147,12 +147,17 @@ export default async function PlanPage({
           }
 
           if (workout.is_rest_day) {
+            const restLabel = workout.day_type === 'race_day' ? '🏁 RACE DAY'
+              : workout.blocks?.[0]?.format ?? 'Descanso'
             return (
               <div key={iso} className="flex items-center gap-4 py-3 px-4 rounded-xl bg-[#0E0E0E] border border-[#181818]">
                 <Moon size={16} className="text-[#333333] shrink-0" />
-                <p className="text-[#444444] text-sm">
-                  {date.toLocaleDateString('es-MX', { weekday: 'long' })} · Descanso
-                </p>
+                <div>
+                  <p className="text-[#444444] text-sm">
+                    {date.toLocaleDateString('es-MX', { weekday: 'long' })}
+                  </p>
+                  <p className="text-[#333333] text-xs truncate max-w-[220px]">{restLabel}</p>
+                </div>
               </div>
             )
           }
