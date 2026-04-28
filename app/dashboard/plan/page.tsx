@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Check, ChevronRight, Moon } from 'lucide-react'
-import { getWorkoutCategory, getCategoryColor } from '@/lib/workout-utils'
+import { getDayTypeLabel, getDayTypeColor } from '@/lib/workout-utils'
 
 const DOW = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
@@ -93,8 +93,7 @@ export default async function PlanPage({
           const workout  = workoutByDate[iso]
           const isToday  = iso === todayISO
           const isDone   = workout && completedSet.has(workout.id)
-          const category = workout && !workout.is_rest_day ? getWorkoutCategory(workout.day_type) : null
-          const color    = category ? getCategoryColor(category) : null
+          const color    = workout && !workout.is_rest_day ? getDayTypeColor(workout.day_type) : null
 
           return (
             <div key={iso} className="flex flex-col items-center gap-1">
@@ -158,9 +157,9 @@ export default async function PlanPage({
             )
           }
 
-          const category = getWorkoutCategory(workout.day_type)
-          const color    = getCategoryColor(category)
-          const isDone   = completedSet.has(workout.id)
+          const color  = getDayTypeColor(workout.day_type)
+          const label  = getDayTypeLabel(workout.day_type)
+          const isDone = completedSet.has(workout.id)
 
           return (
             <Link
@@ -170,17 +169,17 @@ export default async function PlanPage({
                 isToday ? 'border-[#C8FF00]/30 bg-[#C8FF00]/5' : 'border-[#222222] bg-[#141414]'
               }`}
             >
-              {/* Category dot */}
+              {/* Day type pill */}
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold"
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[9px] font-bold text-center leading-tight px-1"
                 style={{ background: `${color}20`, color }}
               >
-                {category.slice(0, 2)}
+                {label.split(' ').map((w, i) => <span key={i} className="block">{w}</span>)}
               </div>
 
               <div className="flex-1 min-w-0">
                 <p className={`font-semibold text-sm truncate ${isToday ? 'text-[#C8FF00]' : 'text-white'}`}>
-                  {workout.day_type}
+                  {label}
                 </p>
                 <p className="text-[#555555] text-xs mt-0.5">
                   {date.toLocaleDateString('es-MX', { weekday: 'long' })} · {workout.duration_minutes} min

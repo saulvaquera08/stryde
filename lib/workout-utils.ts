@@ -1,16 +1,43 @@
 export type WorkoutCategory = 'HYROX' | 'RUN' | 'LIFT' | 'HYBRID' | 'TRAIN'
 
-export function getWorkoutCategory(dayType: string): WorkoutCategory {
-  const t = dayType.toLowerCase()
-  if (t.includes('hyrox')) return 'HYROX'
-  if (t.includes('run') || t.includes('z2') || t.includes('endurance')) return 'RUN'
-  if (t.includes('strength') || t.includes('upper') || t.includes('lower')) return 'LIFT'
-  if (t.includes('hybrid') || t.includes('simulation')) return 'HYBRID'
-  return 'TRAIN'
+// ─── New strict day-type helpers ──────────────────────────────────────────────
+
+export function getDayTypeLabel(dayType: string): string {
+  switch (dayType) {
+    case 'strength_lower_day': return 'FUERZA LOWER'
+    case 'strength_upper_day': return 'FUERZA UPPER'
+    case 'run_day':            return 'RUN'
+    case 'hyrox_day':          return 'HYROX'
+    case 'race_day':           return 'RACE DAY'
+    case 'rest_day':           return 'DESCANSO'
+    default:                   return dayType.toUpperCase().replace(/_/g, ' ')
+  }
 }
 
-export function getCategoryLabel(category: WorkoutCategory): string {
-  return category
+export function getDayTypeColor(dayType: string): string {
+  switch (dayType) {
+    case 'strength_lower_day':
+    case 'strength_upper_day': return '#A78BFA'
+    case 'run_day':            return '#C8FF00'
+    case 'hyrox_day':
+    case 'race_day':           return '#FF6B35'
+    default:                   return '#444444'
+  }
+}
+
+// ─── Legacy category helpers (kept for plan/workout-detail pages) ─────────────
+
+export function getWorkoutCategory(dayType: string): WorkoutCategory {
+  const t = dayType.toLowerCase()
+  // New strict day types
+  if (t === 'hyrox_day' || t === 'race_day')                      return 'HYROX'
+  if (t === 'run_day')                                             return 'RUN'
+  if (t === 'strength_lower_day' || t === 'strength_upper_day')   return 'LIFT'
+  // Legacy fallback
+  if (t.includes('hyrox') || t.includes('simulation'))            return 'HYROX'
+  if (t.includes('run') || t.includes('z2') || t.includes('tempo') || t.includes('interval')) return 'RUN'
+  if (t.includes('strength') || t.includes('upper') || t.includes('lower') || t.includes('fuerza')) return 'LIFT'
+  return 'TRAIN'
 }
 
 export function getCategoryColor(category: WorkoutCategory): string {
@@ -24,10 +51,10 @@ export function getCategoryColor(category: WorkoutCategory): string {
 }
 
 export function getGreeting(hour: number): string {
-  if (hour >= 5  && hour < 12) return 'Good morning'
-  if (hour >= 12 && hour < 17) return 'Good afternoon'
-  if (hour >= 17 && hour < 22) return 'Good evening'
-  return 'Good night'
+  if (hour >= 5  && hour < 12) return 'Buenos días'
+  if (hour >= 12 && hour < 17) return 'Buenas tardes'
+  if (hour >= 17 && hour < 22) return 'Buenas noches'
+  return 'Buenas noches'
 }
 
 export function formatGoalTag(tag: string): string {
@@ -35,9 +62,9 @@ export function formatGoalTag(tag: string): string {
 }
 
 export function getWeekBounds(date: Date): { start: Date; end: Date } {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = (day === 0 ? -6 : 1 - day)
+  const d    = new Date(date)
+  const day  = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
   const start = new Date(d)
   start.setDate(d.getDate() + diff)
   start.setHours(0, 0, 0, 0)

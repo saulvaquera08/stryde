@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, Clock, Zap } from 'lucide-react'
-import { getWorkoutCategory, getCategoryColor } from '@/lib/workout-utils'
+import { getDayTypeLabel, getDayTypeColor } from '@/lib/workout-utils'
 import type { WorkoutBlock } from '@/lib/supabase/types'
 import WorkoutClient from './WorkoutClient'
 
@@ -133,9 +133,10 @@ export default async function WorkoutDetailPage({
 
   const workout   = workoutRes.data
   const completed = completedRes.data
-  const category  = getWorkoutCategory(workout.day_type)
-  const color     = getCategoryColor(category)
+  const color     = getDayTypeColor(workout.day_type)
+  const typeLabel = getDayTypeLabel(workout.day_type)
   const blocks    = (workout.blocks ?? []) as WorkoutBlock[]
+  const firstBlock = blocks[0]
 
   const dateLabel = new Date(workout.scheduled_date + 'T12:00:00').toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -157,7 +158,7 @@ export default async function WorkoutDetailPage({
           className="text-xs font-bold tracking-widest px-2.5 py-1 rounded-full"
           style={{ background: `${color}20`, color }}
         >
-          {category}
+          {typeLabel}
         </span>
         {completed && (
           <span className="text-xs text-[#C8FF00] font-semibold">
@@ -166,9 +167,12 @@ export default async function WorkoutDetailPage({
         )}
       </div>
 
-      <h1 className="text-2xl font-bold text-white mt-3 mb-1 leading-snug">
-        {workout.day_type}
+      <h1 className="text-2xl font-bold text-white mt-3 mb-0.5 leading-snug">
+        {firstBlock?.label ?? typeLabel}
       </h1>
+      {firstBlock?.format && (
+        <p className="text-[#555555] text-xs mb-1">{firstBlock.format.split('\n')[0]}</p>
+      )}
 
       <div className="flex items-center gap-4 mb-6">
         <span className="flex items-center gap-1.5 text-[#888888] text-sm">

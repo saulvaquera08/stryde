@@ -1,18 +1,107 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronRight, Zap, Dumbbell, TrendingUp, Activity } from 'lucide-react'
-import { getWorkoutCategory, getCategoryColor, getGreeting, formatGoalTag } from '@/lib/workout-utils'
+import { ChevronRight, Zap, Dumbbell, TrendingUp, Activity, Flag } from 'lucide-react'
+import { getDayTypeLabel, getDayTypeColor, getGreeting } from '@/lib/workout-utils'
 import { getCoachMessage } from '@/lib/coach'
-import { PHASE_LABELS, type TrainingPhase } from '@/lib/planGenerator'
+import { PHASE_LABELS, PHASE_COLORS, type TrainingPhase } from '@/lib/planGenerator'
+import type { WorkoutBlock } from '@/lib/supabase/types'
 
-function WorkoutIcon({ category, size = 28 }: { category: string; size?: number }) {
-  const cls = `text-current`
-  if (category === 'HYROX')  return <Zap      size={size} className={cls} />
-  if (category === 'RUN')    return <TrendingUp size={size} className={cls} />
-  if (category === 'LIFT')   return <Dumbbell  size={size} className={cls} />
-  if (category === 'HYBRID') return <Zap      size={size} className={cls} />
-  return <Activity size={size} className={cls} />
+const GOAL_LABELS: Record<string, string> = {
+  hyrox:    'HYROX',
+  '21k':    'Media Maratón',
+  '5k':     '5K',
+  '10k':    '10K',
+  strength: 'Fuerza',
+  recomp:   'Recomposición',
+}
+
+function DayTypeIcon({ dayType, size = 26 }: { dayType: string; size?: number }) {
+  if (dayType === 'hyrox_day' || dayType === 'race_day') return <Zap size={size} className="text-current" />
+  if (dayType === 'run_day')                             return <TrendingUp size={size} className="text-current" />
+  if (dayType === 'strength_lower_day')                  return <Dumbbell size={size} className="text-current" />
+  if (dayType === 'strength_upper_day')                  return <Dumbbell size={size} className="text-current" />
+  return <Activity size={size} className="text-current" />
+}
+
+function RaceCountdown({
+  goals,
+  plan,
+  activeWeek,
+}: {
+  goals: Array<{ type: string; race_date: string | null }>
+  plan: { total_weeks: number } | null
+  activeWeek: number
+}) {
+  const upcoming = goals
+    .filter(g => g.race_date)
+    .map(g => ({
+      ...g,
+      daysLeft: Math.ceil(
+        (new Date(g.race_date! + 'T12:00:00').getTime() - Date.now()) / 86_400_000
+      ),
+    }))
+    .filter(g => g.daysLeft >= 0)
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+
+  if (!upcoming.length) return null
+
+  const next = upcoming[0]
+  const weeksLeft = Math.ceil(next.daysLeft / 7)
+  const goalLabel = GOAL_LABELS[next.type] ?? next.type.toUpperCase()
+
+  // Race day
+  if (next.daysLeft === 0) {
+    return (
+      <div className="mb-6 bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-2xl p-4 flex items-center gap-3">
+        <Flag size={20} className="text-[#FF6B35] shrink-0" />
+        <div>
+          <p className="text-[#FF6B35] font-bold text-sm">HOY ES EL DÍA</p>
+          <p className="text-white font-semibold">{goalLabel}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const isUrgent = next.daysLeft <= 7
+  const isNear   = next.daysLeft <= 30
+  const color    = (isUrgent || isNear) ? '#FF6B35' : '#888888'
+  const timeStr  = next.daysLeft <= 30
+    ? `${next.daysLeft} día${next.daysLeft !== 1 ? 's' : ''}`
+    : `${weeksLeft} semana${weeksLeft !== 1 ? 's' : ''}`
+
+  const progressPct = plan && plan.total_weeks > 0
+    ? Math.min((activeWeek / plan.total_weeks) * 100, 100)
+    : 0
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-white text-sm font-semibold">
+          {goalLabel}
+          {upcoming.length > 1 && (
+            <span className="text-[#555555] text-xs font-normal ml-2">
+              +{upcoming.length - 1} más
+            </span>
+          )}
+        </p>
+        <p
+          className={`text-sm font-bold${isUrgent ? ' animate-pulse' : ''}`}
+          style={{ color }}
+        >
+          {timeStr}{isUrgent ? ' 🔥' : ''}
+        </p>
+      </div>
+      {plan && (
+        <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%`, background: color }}
+          />
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default async function TodayPage() {
@@ -23,11 +112,11 @@ export default async function TodayPage() {
   const todayISO = new Date().toISOString().split('T')[0]
   const hour     = new Date().getUTCHours()
 
-  const [profileRes, todayRes, planRes] = await Promise.all([
+  const [profileRes, todayRes, planRes, goalsRes] = await Promise.all([
     supabase.from('users').select('first_name').eq('id', user.id).single(),
     supabase
       .from('workouts')
-      .select('id, day_type, duration_minutes, goals_tags, intensity, is_rest_day')
+      .select('id, day_type, duration_minutes, goals_tags, intensity, is_rest_day, blocks')
       .eq('user_id', user.id)
       .eq('scheduled_date', todayISO)
       .eq('is_rest_day', false)
@@ -39,31 +128,31 @@ export default async function TodayPage() {
       .order('created_at', { ascending: false })
       .limit(1)
       .single(),
+    supabase
+      .from('goals')
+      .select('type, race_date')
+      .eq('user_id', user.id),
   ])
 
   const firstName = profileRes.data?.first_name ?? ''
   const greeting  = getGreeting(hour)
   const plan      = planRes.data
+  const goals     = goalsRes.data ?? []
 
-  // Active plan week: derive week_number from plan start_date so the counter
-  // always reflects the plan's cadence, not the calendar week.
-  // Before the plan starts → week 1 (upcoming). After it ends → last week.
   let activeWeek = 1
   if (plan) {
-    const planStart  = new Date(plan.start_date + 'T00:00:00')
-    const daysDiff   = Math.floor((new Date().getTime() - planStart.getTime()) / 86_400_000)
+    const planStart = new Date(plan.start_date + 'T00:00:00')
+    const daysDiff  = Math.floor((new Date().getTime() - planStart.getTime()) / 86_400_000)
     activeWeek = daysDiff < 0
       ? 1
       : Math.min(Math.floor(daysDiff / 7) + 1, plan.total_weeks)
   }
 
-  // Derive current training phase from plan.structure.phase_map
-  const phaseMap = (plan?.structure as Record<string, unknown> | null)?.phase_map as Record<string, string> | undefined
+  const phaseMap     = (plan?.structure as Record<string, unknown> | null)?.phase_map as Record<string, string> | undefined
   const currentPhase = (phaseMap?.[String(activeWeek)] ?? null) as TrainingPhase | null
 
   const coachMessage = await getCoachMessage(user.id, currentPhase).catch(() => null)
 
-  // Fetch workouts for the active week, then check which are completed
   const weekWorkoutsRes = await supabase
     .from('workouts')
     .select('id')
@@ -82,13 +171,12 @@ export default async function TodayPage() {
   const weekTotal     = weekWorkoutIds.length
   const weekCompleted = completedRes.data?.length ?? 0
 
-  // If no workout today, find next upcoming one
   let nextWorkout = todayRes.data
   let nextDate: string | null = null
   if (!nextWorkout && plan) {
     const nextRes = await supabase
       .from('workouts')
-      .select('id, day_type, duration_minutes, goals_tags, intensity, is_rest_day, scheduled_date')
+      .select('id, day_type, duration_minutes, goals_tags, intensity, is_rest_day, scheduled_date, blocks')
       .eq('user_id', user.id)
       .eq('is_rest_day', false)
       .gt('scheduled_date', todayISO)
@@ -99,16 +187,26 @@ export default async function TodayPage() {
     nextDate    = nextRes.data?.scheduled_date ?? null
   }
 
-  const isToday    = !nextDate
-  const category   = nextWorkout ? getWorkoutCategory(nextWorkout.day_type) : null
-  const color      = category ? getCategoryColor(category) : '#888888'
-  const completedSet = new Set((completedRes.data ?? []).map(c => c.workout_id))
-  const isTodayDone = todayRes.data ? completedSet.has(todayRes.data.id) : false
+  const isToday       = !nextDate
+  const dayType       = nextWorkout?.day_type ?? ''
+  const color         = dayType ? getDayTypeColor(dayType) : '#888888'
+  const typeLabel     = dayType ? getDayTypeLabel(dayType) : null
+  const completedSet  = new Set((completedRes.data ?? []).map(c => c.workout_id))
+  const isTodayDone   = todayRes.data ? completedSet.has(todayRes.data.id) : false
+
+  // Extract variant name + subtitle from first block
+  const firstBlock   = nextWorkout ? ((nextWorkout.blocks ?? []) as WorkoutBlock[])[0] : null
+  const variantName  = firstBlock?.label ?? typeLabel ?? ''
+  // subtitle is stored as "Short desc\nFull format" — take first line
+  const variantSub   = firstBlock?.format?.split('\n')[0] ?? null
+
+  // Race day special handling
+  const isRaceDay = dayType === 'race_day'
 
   return (
     <div className="px-5 pt-12">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-5">
         <p className="text-[#888888] text-sm mb-1">{greeting},</p>
         <h1 className="text-[2.25rem] font-bold text-white leading-tight">
           {firstName || 'Atleta'}.
@@ -117,14 +215,35 @@ export default async function TodayPage() {
 
       {/* AI Coach message */}
       {coachMessage && (
-        <div className="flex items-start gap-2.5 mb-6">
+        <div className="flex items-start gap-2.5 mb-5">
           <Zap size={14} className="text-[#C8FF00] shrink-0 mt-0.5" />
           <p className="text-[#888888] text-sm leading-relaxed">{coachMessage}</p>
         </div>
       )}
 
-      {/* Main workout card */}
-      {nextWorkout ? (
+      {/* Race countdown */}
+      <RaceCountdown goals={goals} plan={plan} activeWeek={activeWeek} />
+
+      {/* Phase pill */}
+      {plan && currentPhase && (
+        <div className="mb-5">
+          <span
+            className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest px-3 py-1 rounded-full"
+            style={{ background: `${PHASE_COLORS[currentPhase]}18`, color: PHASE_COLORS[currentPhase] }}
+          >
+            Semana {activeWeek} de {plan.total_weeks} · Fase {PHASE_LABELS[currentPhase]}
+          </span>
+        </div>
+      )}
+
+      {/* Race day card */}
+      {isRaceDay ? (
+        <div className="rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/08 p-6 mb-5 text-center">
+          <p className="text-4xl mb-3">🏁</p>
+          <p className="text-[#FF6B35] font-bold text-lg mb-1">HOY ES EL DÍA</p>
+          <p className="text-white text-sm">{firstBlock?.format ?? ''}</p>
+        </div>
+      ) : nextWorkout ? (
         <div
           className="rounded-2xl border p-5 mb-5"
           style={{ borderColor: `${color}30`, background: `${color}08` }}
@@ -139,45 +258,34 @@ export default async function TodayPage() {
               {isToday && (
                 <p className="text-xs font-medium mb-1.5" style={{ color }}>HOY</p>
               )}
-              <span
-                className="inline-block text-xs font-bold tracking-widest px-2.5 py-1 rounded-full mb-3"
-                style={{ background: `${color}20`, color }}
-              >
-                {category}
-              </span>
+              {typeLabel && (
+                <span
+                  className="inline-block text-xs font-bold tracking-widest px-2.5 py-1 rounded-full mb-3"
+                  style={{ background: `${color}20`, color }}
+                >
+                  {typeLabel}
+                </span>
+              )}
               <h2 className="text-xl font-bold text-white leading-snug">
-                {nextWorkout.day_type}
+                {variantName}
               </h2>
-              <p className="text-[#888888] text-sm mt-1">
+              {variantSub && (
+                <p className="text-[#555555] text-xs mt-0.5">{variantSub}</p>
+              )}
+              <p className="text-[#888888] text-sm mt-1.5">
                 {nextWorkout.duration_minutes} min · {nextWorkout.intensity}
               </p>
             </div>
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ml-3"
               style={{ background: `${color}15`, color }}
             >
-              <WorkoutIcon category={category ?? 'TRAIN'} size={26} />
+              <DayTypeIcon dayType={dayType} size={26} />
             </div>
           </div>
 
-          {/* Goals tags */}
-          {nextWorkout.goals_tags && nextWorkout.goals_tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
-              <span className="text-[#555555] text-xs">Suma a:</span>
-              {nextWorkout.goals_tags.slice(0, 3).map(tag => (
-                <span
-                  key={tag}
-                  className="text-xs px-2.5 py-0.5 rounded-full border"
-                  style={{ color, borderColor: `${color}40` }}
-                >
-                  {formatGoalTag(tag)}
-                </span>
-              ))}
-            </div>
-          )}
-
           {isTodayDone ? (
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#888888] font-semibold py-3.5 rounded-xl text-center text-sm">
+            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#888888] font-semibold min-h-[56px] rounded-xl flex items-center justify-center text-sm">
               ✓ Completado
             </div>
           ) : (
@@ -208,7 +316,7 @@ export default async function TodayPage() {
                 Semana {activeWeek} de {plan.total_weeks}
               </p>
               {currentPhase && (
-                <p className="text-[#C8FF00] text-xs font-bold tracking-widest mt-0.5">
+                <p className="text-xs font-bold tracking-widest mt-0.5" style={{ color: PHASE_COLORS[currentPhase] }}>
                   Fase {PHASE_LABELS[currentPhase]}
                 </p>
               )}
