@@ -338,7 +338,8 @@ function slotIntensity(slot: SlotKey, phase: TrainingPhase): IntensityLevel {
     return 'low' // base is all low-moderate
   }
   if (phase === 'peak' || phase === 'specific') {
-    if (slot === 'RI' || slot === 'HX') return 'high'
+    if (slot === 'RI') return 'high'  // intervals = único día verdaderamente high
+    if (slot === 'HX') return 'moderate' // hyrox sim es exigente pero no high (evita consecutivo)
     if (slot === 'SL' || slot === 'SU') return 'moderate'
     if (slot === 'RL') return 'moderate'
     return 'low'
