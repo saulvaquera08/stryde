@@ -186,6 +186,7 @@ export type Database = {
           completed_at: string
           rating: number | null
           notes: string | null
+          duration_seconds: number | null
           metrics: Record<string, unknown>
         }
         Insert: {
@@ -195,6 +196,7 @@ export type Database = {
           completed_at?: string
           rating?: number | null
           notes?: string | null
+          duration_seconds?: number | null
           metrics?: Record<string, unknown>
         }
         Update: {
@@ -204,6 +206,7 @@ export type Database = {
           completed_at?: string
           rating?: number | null
           notes?: string | null
+          duration_seconds?: number | null
           metrics?: Record<string, unknown>
         }
         Relationships: []

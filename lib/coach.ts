@@ -157,9 +157,9 @@ function buildPrompt(ctx: CoachContext): string {
       lines.push(`  - ${w.day_type}${ratingStr}`)
     }
     const ratingsWithValue = ctx.recentCompleted.filter(w => w.rating !== null)
-    const lowRatings = ratingsWithValue.filter(w => w.rating! <= 3)
+    const lowRatings = ratingsWithValue.filter(w => w.rating! >= 8)
     if (lowRatings.length >= 3) {
-      lines.push('ALERTA: 3 o más entrenamientos recientes con calificación ≤ 3. Considera una semana de recuperación.')
+      lines.push('ALERTA: 3 o más entrenamientos recientes con dificultad ≥ 8/10. Posible acumulación de fatiga — considera ajustar la carga.')
     }
   } else {
     lines.push('Sin entrenamientos completados en los últimos 7 días.')

@@ -249,7 +249,7 @@ function buildSchedule(trainingDays: string[]): { dayOfWeek: number; slot: SlotK
 
 export function calcTotalWeeks(goals: PlanProfile['goals']): number {
   // Use plan start (next Monday) so the race_date falls in the final (taper) week.
-  const planStart = getNextMonday()
+  const planStart = getPlanStartMonday()
 
   const upcoming = goals
     .filter(g => g.race_date)
@@ -491,11 +491,11 @@ function getPrimaryGoal(goals: PlanProfile['goals']): string {
   return sorted[0].type
 }
 
-function getNextMonday(): Date {
+function getPlanStartMonday(): Date {
   const today = new Date()
   const day   = today.getDay()
   const d     = new Date(today)
-  d.setDate(today.getDate() + (day === 0 ? 1 : 8 - day))
+  d.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
   d.setHours(0, 0, 0, 0)
   return d
 }
@@ -513,7 +513,7 @@ function toDateStr(date: Date): string {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function generatePlan(userId: string, profile: PlanProfile): GeneratedPlan {
-  const startDate     = getNextMonday()
+  const startDate     = getPlanStartMonday()
   const totalWeeks    = calcTotalWeeks(profile.goals)
   const endDate       = addDays(startDate, totalWeeks * 7 - 1)
   const periodization = buildPeriodization(totalWeeks)
