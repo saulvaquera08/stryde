@@ -12,7 +12,7 @@ export interface OnboardingData {
   last_name: string
   goals: GoalSelection[]
   level: LevelType | ''
-  available_days: number
+  training_days: string[]
   age: string
   weight: string
   height: string

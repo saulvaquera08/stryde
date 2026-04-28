@@ -21,7 +21,8 @@ export async function saveOnboarding(data: OnboardingData) {
       weight:           data.weight  ? parseFloat(data.weight)  : null,
       height:           data.height  ? parseFloat(data.height)  : null,
       level:            data.level   || null,
-      available_days:   [data.available_days],
+      training_days:    data.training_days,
+      available_days:   [data.training_days.length],
       equipment:        [data.equipment || ''],
       current_5k_time:  data.current_5k_time  ? `00:${data.current_5k_time}` : null,
       current_10k_time: data.current_10k_time ? `00:${data.current_10k_time}` : null,
@@ -47,10 +48,10 @@ export async function saveOnboarding(data: OnboardingData) {
 
   // ── 3. Generate plan ──────────────────────────────────────────────────────
   const { plan: planData, workouts: workoutsData } = generatePlan(user.id, {
-    level:          data.level || 'beginner',
-    available_days: data.available_days,
-    equipment:      data.equipment || 'none',
-    goals:          data.goals,
+    level:         data.level || 'beginner',
+    training_days: data.training_days,
+    equipment:     data.equipment || 'none',
+    goals:         data.goals,
   })
 
   // ── 4. Insert plan ────────────────────────────────────────────────────────

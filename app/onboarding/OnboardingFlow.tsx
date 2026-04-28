@@ -17,7 +17,7 @@ const INITIAL_DATA: OnboardingData = {
   last_name: '',
   goals: [],
   level: '',
-  available_days: 4,
+  training_days: [],
   age: '',
   weight: '',
   height: '',

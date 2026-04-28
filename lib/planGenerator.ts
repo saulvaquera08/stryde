@@ -5,7 +5,7 @@ type WorkoutInsert = Database['public']['Tables']['workouts']['Insert']
 
 export interface PlanProfile {
   level: string
-  available_days: number
+  training_days: string[]   // e.g. ['monday','wednesday','friday','saturday']
   equipment: string
   goals: Array<{ type: string; race_date?: string }>
 }
@@ -145,35 +145,33 @@ const ZONE_DIST: Record<string, { highPct: number }> = {
   recomp:        { highPct: 0.15 },
 }
 
-// ─── Schedule templates (dayOfWeek: 1=Mon … 7=Sun) ───────────────────────────
+// ─── Day-of-week helpers ──────────────────────────────────────────────────────
 
-const SCHEDULES: Record<number, { dayOfWeek: number; slot: string }[]> = {
-  3: [
-    { dayOfWeek: 1, slot: 'strength_intervals' },
-    { dayOfWeek: 3, slot: 'hyrox_or_tempo'     },
-    { dayOfWeek: 5, slot: 'zone2'               },
-  ],
-  4: [
-    { dayOfWeek: 1, slot: 'strength_intervals' },
-    { dayOfWeek: 3, slot: 'zone2'               },
-    { dayOfWeek: 5, slot: 'hyrox_or_tempo'      },
-    { dayOfWeek: 6, slot: 'upper_tempo'         },
-  ],
-  5: [
-    { dayOfWeek: 1, slot: 'strength_intervals' },
-    { dayOfWeek: 2, slot: 'zone2'               },
-    { dayOfWeek: 3, slot: 'hyrox_or_tempo'      },
-    { dayOfWeek: 5, slot: 'upper_tempo'         },
-    { dayOfWeek: 6, slot: 'long_run'            },
-  ],
-  6: [
-    { dayOfWeek: 1, slot: 'strength_intervals' },
-    { dayOfWeek: 2, slot: 'zone2'               },
-    { dayOfWeek: 3, slot: 'hyrox_or_tempo'      },
-    { dayOfWeek: 4, slot: 'upper_tempo'         },
-    { dayOfWeek: 5, slot: 'long_run'            },
-    { dayOfWeek: 6, slot: 'zone2'               },
-  ],
+const DAY_TO_NUM: Record<string, number> = {
+  monday: 1, tuesday: 2, wednesday: 3, thursday: 4,
+  friday: 5, saturday: 6, sunday: 7,
+}
+
+// Slot sequences: ordered by training importance so high/low alternate naturally.
+// The first slot always gets the heaviest session; the rest fill in.
+const SLOT_SEQUENCES: Record<number, string[]> = {
+  3: ['strength_intervals', 'hyrox_or_tempo', 'zone2'],
+  4: ['strength_intervals', 'zone2', 'hyrox_or_tempo', 'upper_tempo'],
+  5: ['strength_intervals', 'zone2', 'hyrox_or_tempo', 'upper_tempo', 'long_run'],
+  6: ['strength_intervals', 'zone2', 'hyrox_or_tempo', 'upper_tempo', 'long_run', 'zone2'],
+}
+
+function buildSchedule(trainingDays: string[]): { dayOfWeek: number; slot: string }[] {
+  const count   = Math.min(Math.max(trainingDays.length, 3), 6)
+  const slots   = SLOT_SEQUENCES[count] ?? SLOT_SEQUENCES[4]
+  const sorted  = [...trainingDays]
+    .sort((a, b) => (DAY_TO_NUM[a] ?? 0) - (DAY_TO_NUM[b] ?? 0))
+    .slice(0, count)
+
+  return sorted.map((day, i) => ({
+    dayOfWeek: DAY_TO_NUM[day] ?? i + 1,
+    slot:      slots[i],
+  }))
 }
 
 // ─── Slot → category mapping ──────────────────────────────────────────────────
@@ -374,8 +372,7 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
   const totalWeeks = 6
   const endDate    = addDays(startDate, totalWeeks * 7 - 1)
 
-  const days     = Math.min(Math.max(profile.available_days, 3), 6)
-  const schedule = SCHEDULES[days] ?? SCHEDULES[4]
+  const schedule = buildSchedule(profile.training_days)
   const primary  = getPrimaryGoal(profile.goals)
 
   const plan: PlanInsert = {
@@ -385,11 +382,12 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
     total_weeks: totalWeeks,
     structure: {
       phase:          'initial',
-      available_days: profile.available_days,
+      available_days: profile.training_days.length,
       level:          profile.level,
       equipment:      profile.equipment,
       goals:          profile.goals.map(g => g.type),
       primary_goal:   primary,
+      training_days:  profile.training_days,
       zone_bias:      ZONE_DIST[primary] ?? ZONE_DIST.hyrox,
       progression:    WEEK_MODS.map(m => m.phase),
       generated_at:   new Date().toISOString(),

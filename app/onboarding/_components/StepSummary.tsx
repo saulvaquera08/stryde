@@ -3,6 +3,13 @@
 import { Loader2, ChevronLeft, Zap } from 'lucide-react'
 import type { OnboardingData } from '../types'
 
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Lun', tuesday: 'Mar', wednesday: 'Mié',
+  thursday: 'Jue', friday: 'Vie', saturday: 'Sáb', sunday: 'Dom',
+}
+
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
 const GOAL_LABELS: Record<string, string> = {
   hyrox: 'HYROX',
   '21k': 'Media Maratón 21K',
@@ -86,7 +93,15 @@ export default function StepSummary({ data, onBack, onSubmit, isPending }: Props
           <Row label="Nombre"        value={`${data.first_name} ${data.last_name}`} />
           <Row label="Objetivos"     value={goalsText} />
           <Row label="Nivel"         value={LEVEL_LABELS[data.level] ?? data.level} />
-          <Row label="Días / semana" value={`${data.available_days} días de entrenamiento`} />
+          <Row
+            label="Días de entrenamiento"
+            value={
+              DAY_ORDER
+                .filter(d => data.training_days.includes(d))
+                .map(d => DAY_LABELS[d])
+                .join('  ·  ') || '—'
+            }
+          />
           <Row label="Perfil"        value={profile} />
           {times && <Row label="Tiempos" value={times} />}
           <Row label="Equipo"        value={EQUIPMENT_LABELS[data.equipment] ?? data.equipment} />

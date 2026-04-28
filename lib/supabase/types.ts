@@ -35,6 +35,7 @@ export type Database = {
           height: number | null
           level: string | null
           available_days: number[] | null
+          training_days: string[]
           equipment: string[] | null
           injuries: string[] | null
           current_5k_time: string | null
@@ -51,6 +52,7 @@ export type Database = {
           height?: number | null
           level?: string | null
           available_days?: number[] | null
+          training_days?: string[]
           equipment?: string[] | null
           injuries?: string[] | null
           current_5k_time?: string | null
@@ -67,6 +69,7 @@ export type Database = {
           height?: number | null
           level?: string | null
           available_days?: number[] | null
+          training_days?: string[]
           equipment?: string[] | null
           injuries?: string[] | null
           current_5k_time?: string | null
