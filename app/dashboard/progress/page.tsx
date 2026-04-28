@@ -8,6 +8,14 @@ interface CompletedRow {
   completed_at: string
 }
 
+interface HistoryRow {
+  completed_at: string
+  duration_seconds: number | null
+  rating: number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  workouts: any
+}
+
 function startOfWeekMonday(ref: Date): Date {
   const d = new Date(ref)
   const day = d.getDay()
@@ -23,14 +31,23 @@ export default async function ProgressPage() {
 
   const oneYearAgo = new Date(Date.now() - 366 * 86_400_000).toISOString()
 
-  const { data } = await supabase
-    .from('completed_workouts')
-    .select('duration_seconds, rating, completed_at')
-    .eq('user_id', user.id)
-    .gte('completed_at', oneYearAgo)
-    .order('completed_at', { ascending: true })
+  const [mainRes, historyRes] = await Promise.all([
+    supabase
+      .from('completed_workouts')
+      .select('duration_seconds, rating, completed_at')
+      .eq('user_id', user.id)
+      .gte('completed_at', oneYearAgo)
+      .order('completed_at', { ascending: true }),
+    supabase
+      .from('completed_workouts')
+      .select('completed_at, duration_seconds, rating, workouts(day_type, duration_minutes, blocks)')
+      .eq('user_id', user.id)
+      .order('completed_at', { ascending: false })
+      .limit(10),
+  ])
 
-  const completed: CompletedRow[] = data ?? []
+  const completed: CompletedRow[] = mainRes.data ?? []
+  const history: HistoryRow[]     = (historyRes.data ?? []) as HistoryRow[]
   const hasData = completed.length > 0
 
   const empty = { sessions: 0, minutes: 0, avgIntensity: null }
@@ -41,6 +58,7 @@ export default async function ProgressPage() {
         hasData={false}
         bars={{ week: Array(7).fill(0), month: Array(4).fill(0), year: Array(12).fill(0) }}
         stats={{ week: empty, month: empty, year: empty }}
+        history={[]}
       />
     )
   }
@@ -65,7 +83,6 @@ export default async function ProgressPage() {
     const minutes = row.duration_seconds != null ? Math.round(row.duration_seconds / 60) : 0
     const rowDate = ts.toISOString().split('T')[0]
 
-    // Year (last 12 months)
     const monthDiff = (now.getFullYear() - ts.getFullYear()) * 12 + (now.getMonth() - ts.getMonth())
     if (monthDiff >= 0 && monthDiff < 12) {
       const idx = 11 - monthDiff
@@ -75,7 +92,6 @@ export default async function ProgressPage() {
       if (row.rating !== null) yearStats.ratings.push(row.rating)
     }
 
-    // Month (last 4 weeks)
     const fourWeeksAgoStr = fourWeeksAgo.toISOString().split('T')[0]
     if (rowDate >= fourWeeksAgoStr && rowDate <= todayStr) {
       const daysDiff = Math.floor((ts.getTime() - fourWeeksAgo.getTime()) / 86_400_000)
@@ -86,7 +102,6 @@ export default async function ProgressPage() {
       if (row.rating !== null) monthStats.ratings.push(row.rating)
     }
 
-    // Week (current Mon–Sun)
     const weekStartStr = weekStart.toISOString().split('T')[0]
     const weekEndDate  = new Date(weekStart)
     weekEndDate.setDate(weekEndDate.getDate() + 6)
@@ -107,6 +122,19 @@ export default async function ProgressPage() {
     return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10
   }
 
+  // Build history items
+  const historyItems = history.map(h => {
+    const w = h.workouts
+    return {
+      completed_at:     h.completed_at,
+      duration_seconds: h.duration_seconds,
+      rating:           h.rating,
+      day_type:         w?.day_type ?? '',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      label:            (w?.blocks as any)?.[0]?.label ?? '',
+    }
+  })
+
   return (
     <ProgressClient
       hasData={true}
@@ -116,6 +144,7 @@ export default async function ProgressPage() {
         month: { sessions: monthStats.sessions, minutes: monthStats.minutes, avgIntensity: avg(monthStats.ratings) },
         year:  { sessions: yearStats.sessions,  minutes: yearStats.minutes,  avgIntensity: avg(yearStats.ratings)  },
       }}
+      history={historyItems}
     />
   )
 }

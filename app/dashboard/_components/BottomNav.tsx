@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation'
 import { Zap, Calendar, BarChart2, MoreHorizontal } from 'lucide-react'
 
 const TABS = [
-  { href: '/dashboard',          label: 'Today',    Icon: Zap          },
-  { href: '/dashboard/plan',     label: 'Plan',     Icon: Calendar     },
-  { href: '/dashboard/progress', label: 'Progress', Icon: BarChart2    },
+  { href: '/dashboard',          label: 'Today',    Icon: Zap            },
+  { href: '/dashboard/plan',     label: 'Plan',     Icon: Calendar       },
+  { href: '/dashboard/progress', label: 'Stats',    Icon: BarChart2      },
   { href: '/dashboard/more',     label: 'More',     Icon: MoreHorizontal },
 ]
 
@@ -15,8 +15,8 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#1A1A1A] z-50">
-      <div className="flex max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A] border-t border-[#1A1A1A]">
+      <div className="flex max-w-lg mx-auto h-[60px]">
         {TABS.map(({ href, label, Icon }) => {
           const active = href === '/dashboard'
             ? pathname === '/dashboard'
@@ -25,22 +25,22 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center gap-1 py-3 transition-opacity"
+              className="flex-1 flex flex-col items-center justify-center gap-1 transition-opacity active:opacity-60"
             >
               <Icon
                 size={22}
-                className={active ? 'text-[#C8FF00]' : 'text-[#444444]'}
+                className={active ? 'text-[#C8FF00]' : 'text-[#555555]'}
                 strokeWidth={active ? 2.5 : 1.5}
               />
-              <span className={`text-[10px] font-medium tracking-wide ${active ? 'text-[#C8FF00]' : 'text-[#444444]'}`}>
+              <span className={`text-[10px] font-medium tracking-wide ${active ? 'text-[#C8FF00]' : 'text-[#555555]'}`}>
                 {label}
               </span>
             </Link>
           )
         })}
       </div>
-      {/* safe area spacer */}
-      <div className="h-safe-area-inset-bottom" />
+      {/* iOS safe area */}
+      <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   )
 }
