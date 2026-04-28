@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Flame, Clock, Star } from 'lucide-react'
+import { Flame, Clock, Zap } from 'lucide-react'
 
 type Tab = 'week' | 'month' | 'year'
 
 interface PeriodStats {
   sessions: number
   minutes: number
-  avgRating: number | null
+  avgIntensity: number | null
 }
 
 interface ProgressClientProps {
@@ -91,11 +91,11 @@ export default function ProgressClient({ hasData, bars, stats }: ProgressClientP
           <p className="text-[#555555] text-xs">tiempo</p>
         </div>
         <div className="bg-[#141414] border border-[#222222] rounded-2xl p-4">
-          <Star size={16} className="text-[#A78BFA] mb-2" />
+          <Zap size={16} className="text-[#A78BFA] mb-2" />
           <p className="text-white font-bold text-lg">
-            {d.avgRating !== null ? d.avgRating.toFixed(1) : '—'}
+            {d.avgIntensity !== null ? `${d.avgIntensity.toFixed(1)}/10` : '—'}
           </p>
-          <p className="text-[#555555] text-xs">calificación</p>
+          <p className="text-[#555555] text-xs">intensidad</p>
         </div>
       </div>
 
