@@ -61,38 +61,38 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
   // ── Strength Lower (no running, no cardio) ───────────────────────────────
   strength_lower: [
     {
-      id: 'SL_A', name: 'Power Lower A', duration: 55,
-      subtitle: 'Deadlift focus',
+      id: 'SL_A', name: 'Fuerza piernas — Peso muerto', duration: 55,
+      subtitle: 'Deadlift · Split squat · Box jump',
       exercises: ['Deadlift 4x5 @80%', 'Bulgarian split squat 3x8 cada pierna', 'Romanian deadlift 3x10', 'Box jumps 4x5', 'Core: plancha 3x45s'],
       rest: '2-3 min pesados / 90s accesorios',
     },
     {
-      id: 'SL_B', name: 'Power Lower B', duration: 55,
-      subtitle: 'Squat focus',
+      id: 'SL_B', name: 'Fuerza piernas — Squat', duration: 55,
+      subtitle: 'Back squat · Step-up · Broad jump',
       exercises: ['Back squat 4x5 @80%', 'Step-ups con mancuernas 3x10', 'Good mornings 3x12', 'Broad jumps 3x4', 'Core: dead bug 3x10'],
       rest: '2-3 min / 90s',
     },
     {
-      id: 'SL_C', name: 'Strength Endurance Lower', duration: 50,
-      subtitle: 'Front squat + lunges',
+      id: 'SL_C', name: 'Resistencia piernas', duration: 50,
+      subtitle: 'Front squat · Zancadas · KB swings',
       exercises: ['Front squat 4x6', 'Walking lunges con carga 4x12', 'Single leg RDL 3x10', 'Saltos al cajón 3x6', 'Kettlebell swings 3x15'],
       rest: '90s',
     },
     {
-      id: 'SL_D', name: 'Posterior Chain Focus', duration: 50,
-      subtitle: 'Hip thrust · Nordic curl',
+      id: 'SL_D', name: 'Cadena posterior', duration: 50,
+      subtitle: 'Hip thrust · Nordic curl · KB swing',
       exercises: ['Sumo deadlift 4x5', 'Hip thrust 4x10', 'Nordic curl 3x6', 'Kettlebell swing 4x15', 'Core: hollow body 3x30s'],
       rest: '2 min / 60s',
     },
     {
-      id: 'SL_E', name: 'Lower Power Real', duration: 55,
+      id: 'SL_E', name: 'Explosividad piernas', duration: 55,
       subtitle: 'Front squat · Farmer carry · SL hops',
       exercises: ['Front squat 6 reps', 'SB squeeze 20 reps', 'KB swings 20 reps explosivo', 'Band hip flexor 8/8', 'Trap bar farmer carry 30m', 'Kneeling paloff 8/8', 'SL RDL 8/8', 'SL hops/bounds 15m explosivo'],
       rest: '2 min / 90s',
     },
     {
-      id: 'SL_F', name: 'Strength Lower Clásico HYROX', duration: 55,
-      subtitle: 'Back squat · Deadlift · Box jumps',
+      id: 'SL_F', name: 'Piernas HYROX', duration: 55,
+      subtitle: 'Back squat · Deadlift · Box jump',
       exercises: ['Back squats 4x5-6', 'Deadlifts 3x3-5', 'Box jumps o jump squats 3x6-8', 'Lunges con mancuernas 3x8 por pierna', 'Calf raises 3x12-15'],
       rest: '2-3 min / 60s',
     },
@@ -101,37 +101,37 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
   // ── Strength Upper (no running, no squats pesados) ───────────────────────
   strength_upper: [
     {
-      id: 'SU_A', name: 'Push/Pull A', duration: 52,
-      subtitle: 'Bench · Pull-ups',
+      id: 'SU_A', name: 'Empuje y tirón A', duration: 52,
+      subtitle: 'Bench press · Pull-ups · Press hombro',
       exercises: ['Bench press 4x6', 'Pull-ups 4x6', 'DB shoulder press 3x10', 'Cable row 3x10', 'Tricep dips 2x12', 'Hollow body hold 3x30s'],
       rest: '90s',
     },
     {
-      id: 'SU_B', name: 'Push/Pull B', duration: 50,
-      subtitle: 'Incline press · Barbell row',
+      id: 'SU_B', name: 'Empuje y tirón B', duration: 50,
+      subtitle: 'Incline press · Barbell row · Arnold press',
       exercises: ['Incline DB press 4x8', 'Barbell row 4x6', 'Arnold press 3x10', 'Face pulls 3x15', 'Chin-ups 3x max'],
       rest: '90s',
     },
     {
-      id: 'SU_C', name: 'Upper Endurance', duration: 45,
-      subtitle: 'Farmer carry · Battle ropes',
+      id: 'SU_C', name: 'Resistencia funcional', duration: 45,
+      subtitle: 'Push-ups · Farmer carry · Battle ropes',
       exercises: ['Push-ups 4x20', 'TRX row 4x15', 'Farmer carry 4x40m', 'Battle ropes 4x30s', 'Hollow body hold 3x30s'],
       rest: '60s',
     },
     {
-      id: 'SU_D', name: 'Upper Push Focus', duration: 50,
+      id: 'SU_D', name: 'Press y empuje', duration: 50,
       subtitle: 'Bench · OHP · Dips',
       exercises: ['Bench press 4x5-6', 'Incline bench press o DB press 3x6-8', 'Overhead press 3x5-6', 'Dips ponderado o corporal 3x6-8', 'Tricep rope pushdowns o skull crushers 3x8-10'],
       rest: '90s-2 min',
     },
     {
-      id: 'SU_E', name: 'Upper Pull Focus', duration: 50,
+      id: 'SU_E', name: 'Jalones y espalda', duration: 50,
       subtitle: 'Pull-ups · Barbell rows · Curls',
       exercises: ['Pull-ups o lat pulldowns 4x5-6', 'Barbell rows 4x5-6', 'Dumbbell rows 3x8-10 por brazo', 'Barbell curls 3x6-8', 'Face pulls o reverse pec deck 3x12-15'],
       rest: '60s-2 min',
     },
     {
-      id: 'SU_F', name: 'Upper HYROX Functional', duration: 55,
+      id: 'SU_F', name: 'Funcional HYROX', duration: 55,
       subtitle: 'Shoulder press · Burpee box jump · Farmer carry',
       exercises: ['Seated shoulder press 15 reps', 'Kneeling wall balls 8 reps explosivo', 'LM row 10/10', 'Cuban press 8 reps', 'Burpee box jump 4x6-8', 'Farmer carry sprint 4x30-40m', 'Sled push o push-ups explosivos 4x20-30m', 'Rope climb o pull-up explosivo 3x4-5', 'Battle ropes o underbar crawl 3x30s'],
       rest: '2 min / 90s',
@@ -140,34 +140,34 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
 
   // ── Run — Intervals (solo running, no gym) ───────────────────────────────
   run_intervals: [
-    { id: 'INT_A', name: 'Track 400s',        duration: 50, subtitle: '6×400m · RPE 8-9',      format: 'Calentamiento 15 min · 6×400m al ritmo 5K · enfriamiento 10 min',   rest: '90s', pace: 'RPE 8-9' },
-    { id: 'INT_B', name: '1K Repeats',         duration: 55, subtitle: '5×1000m · RPE 8',        format: 'Calentamiento 15 min · 5×1000m · enfriamiento 10 min',              rest: '2 min', pace: 'RPE 8' },
-    { id: 'INT_C', name: 'Pyramid Intervals',  duration: 55, subtitle: '400+800+1200+800+400',    format: '400m + 800m + 1200m + 800m + 400m con descansos',                   rest: '90s-2min', pace: 'RPE 8-9' },
-    { id: 'INT_D', name: 'Short Speed',        duration: 45, subtitle: '10×200m · RPE 9',         format: 'Calentamiento 15 min · 10×200m · enfriamiento',                     rest: '60s', pace: 'RPE 9' },
-    { id: 'INT_E', name: 'Fartlek',            duration: 45, subtitle: '30 min sin estructura',   format: '30 min: alterna 2 min rápido / 3 min fácil' },
+    { id: 'INT_A', name: 'Series 400m',       duration: 50, subtitle: '6×400m · RPE 8-9',    format: 'Calentamiento 15 min · 6×400m al ritmo 5K · enfriamiento 10 min', rest: '90s', pace: 'RPE 8-9' },
+    { id: 'INT_B', name: 'Series 1000m',       duration: 55, subtitle: '5×1000m · RPE 8',     format: 'Calentamiento 15 min · 5×1000m · enfriamiento 10 min',             rest: '2 min', pace: 'RPE 8' },
+    { id: 'INT_C', name: 'Pirámide de series', duration: 55, subtitle: '400-800-1200-800-400', format: '400m + 800m + 1200m + 800m + 400m con descansos',                  rest: '90s-2min', pace: 'RPE 8-9' },
+    { id: 'INT_D', name: 'Velocidad 200m',     duration: 45, subtitle: '10×200m · RPE 9',      format: 'Calentamiento 15 min · 10×200m · enfriamiento',                    rest: '60s', pace: 'RPE 9' },
+    { id: 'INT_E', name: 'Fartlek',            duration: 45, subtitle: '30 min sin estructura', format: '30 min: alterna 2 min rápido / 3 min fácil' },
   ],
 
   // ── Run — Z2 (solo running, no gym) ─────────────────────────────────────
   run_z2: [
-    { id: 'Z2_A', name: 'Easy Base Run',       duration: 45, subtitle: '45 min · Z2',           format: '45 min continuo en Zona 2',                                         hr_zone: 2 },
-    { id: 'Z2_B', name: 'Easy Run + Drills',   duration: 50, subtitle: '35 min Z2 + drills',    format: '35 min Z2 · 10 min drills (A-skip, B-skip, strides)',                hr_zone: 2 },
-    { id: 'Z2_C', name: 'Z2 + Core',           duration: 55, subtitle: '40 min Z2 + core',      format: '40 min Z2 · 15 min core funcional',                                 hr_zone: 2 },
-    { id: 'Z2_D', name: 'Easy Run + Mobility', duration: 60, subtitle: '45 min Z2 + movilidad', format: '45 min Z2 · 15 min movilidad dinámica post-carrera',                 hr_zone: 2 },
+    { id: 'Z2_A', name: 'Rodaje Z2 suave',       duration: 45, subtitle: '45 min · Zona 2',          format: '45 min continuo en Zona 2',                                        hr_zone: 2 },
+    { id: 'Z2_B', name: 'Z2 + técnica',           duration: 50, subtitle: '35 min Z2 + drills',       format: '35 min Z2 · 10 min drills (A-skip, B-skip, strides)',               hr_zone: 2 },
+    { id: 'Z2_C', name: 'Z2 + core',              duration: 55, subtitle: '40 min Z2 + core funcional', format: '40 min Z2 · 15 min core funcional',                               hr_zone: 2 },
+    { id: 'Z2_D', name: 'Z2 + movilidad',         duration: 60, subtitle: '45 min Z2 + movilidad',    format: '45 min Z2 · 15 min movilidad dinámica post-carrera',                hr_zone: 2 },
   ],
 
   // ── Run — Tempo (solo running, no gym) ──────────────────────────────────
   run_tempo: [
-    { id: 'TMP_A', name: 'Classic Tempo',     duration: 50, subtitle: '25 min tempo continuo', format: '15 min easy · 25 min tempo continuo · 10 min easy',  pace: 'RPE 7' },
-    { id: 'TMP_B', name: 'Cruise Intervals',  duration: 50, subtitle: '3×10 min tempo',        format: '3×10 min tempo con 2 min descanso activo',            pace: 'RPE 7' },
-    { id: 'TMP_C', name: 'Progressive Tempo', duration: 40, subtitle: '20 min progresivo',     format: '20 min: empieza Z2, termina Z3-4 los últimos 5 min' },
+    { id: 'TMP_A', name: 'Tempo continuo',    duration: 50, subtitle: '25 min a ritmo tempo', format: '15 min easy · 25 min tempo continuo · 10 min easy', pace: 'RPE 7' },
+    { id: 'TMP_B', name: 'Intervalos tempo',  duration: 50, subtitle: '3×10 min · RPE 7',     format: '3×10 min tempo con 2 min descanso activo',           pace: 'RPE 7' },
+    { id: 'TMP_C', name: 'Progresivo',        duration: 40, subtitle: 'Z2 → Z3-4 en 20 min',  format: '20 min: empieza Z2, termina Z3-4 los últimos 5 min' },
   ],
 
   // ── Run — Long (solo running, no gym) ───────────────────────────────────
   run_long: [
-    { id: 'LR_A', name: 'Easy Long Run',          duration: 70, subtitle: '70 min · todo Z2',         format: '70 min continuo en Zona 2',                                       pace: 'RPE 5' },
-    { id: 'LR_B', name: 'Long Run + Finish Fast', duration: 75, subtitle: '60 min Z2 · 15 min tempo', format: '60 min Z2 · últimos 15 min a ritmo tempo' },
-    { id: 'LR_C', name: 'Long Run + Strides',     duration: 80, subtitle: '65 min Z2 · strides',      format: '65 min Z2 · 6 strides de 20s al final' },
-    { id: 'LR_D', name: 'Hybrid Long',            duration: 75, subtitle: '45 min Z2 + bloques Z3',   format: '45 min Z2 · 3×(5 min Z3 + 5 min Z2)' },
+    { id: 'LR_A', name: 'Rodaje largo',             duration: 70, subtitle: '70 min · todo Z2',        format: '70 min continuo en Zona 2',                         pace: 'RPE 5' },
+    { id: 'LR_B', name: 'Largo con final rápido',   duration: 75, subtitle: '60 min Z2 · 15 min tempo', format: '60 min Z2 · últimos 15 min a ritmo tempo' },
+    { id: 'LR_C', name: 'Largo con aceleraciones',  duration: 80, subtitle: '65 min Z2 · strides',     format: '65 min Z2 · 6 strides de 20s al final' },
+    { id: 'LR_D', name: 'Largo con bloques Z3',     duration: 75, subtitle: '45 min Z2 + 3 bloques Z3', format: '45 min Z2 · 3×(5 min Z3 + 5 min Z2)' },
   ],
 
   // ── Recovery (movilidad suave, sin carga) ───────────────────────────────
@@ -197,60 +197,60 @@ const LIBRARY: Record<string, LibraryVariant[]> = {
   // ── HYROX (running + funcional juntos — único día que mezcla) ───────────
   hyrox_sim: [
     {
-      id: 'HX_A', name: 'HYROX Full Sim', duration: 75,
+      id: 'HX_A', name: 'Simulacro completo HYROX', duration: 75,
       subtitle: '8×400m + estación',
       format: '8 rondas: 400m run + 1 estación',
       stations: ['SkiErg 250m', 'Sled push 25m', 'Sled pull 25m', 'Burpee broad jumps 20m', 'Remo 250m', 'Farmer carry 50m', 'Walking lunges con saco 25m', 'Wall balls 25 reps'],
     },
     {
-      id: 'HX_B', name: 'HYROX Half Sim', duration: 50,
+      id: 'HX_B', name: 'Medio simulacro HYROX', duration: 50,
       subtitle: '4×400m + estación',
       format: '4 rondas: 400m run + 1 estación',
       stations: ['SkiErg 250m', 'Sled push/pull 25m', 'Burpee broad jumps 20m', 'Farmer carry 50m'],
     },
     {
-      id: 'HX_C', name: 'HYROX Stations Only', duration: 48,
+      id: 'HX_C', name: 'Solo estaciones HYROX', duration: 48,
       subtitle: '3 rondas · sin correr',
       format: '3 rondas de estaciones — sin running',
       exercises: ['SkiErg 500m', 'Sled push 50m', 'Burpees 20 reps', 'Farmer carry 80m', 'Wall balls 30 reps', 'Walking lunges 50m'],
       rounds: 3, rest: '90s entre estaciones',
     },
     {
-      id: 'HX_D', name: 'Run + Fatigue', duration: 55,
+      id: 'HX_D', name: 'Km tempo + funcional', duration: 55,
       subtitle: '4×1km tempo + funcional',
       format: '4 bloques: 1km tempo + ejercicio funcional',
       blocks: ['1km tempo · 15 burpees', '1km tempo · 20 walking lunges', '1km tempo · 30 wall balls', '1km easy'],
     },
     {
-      id: 'HX_E', name: 'WOD Descending Ladder', duration: 65,
+      id: 'HX_E', name: 'WOD: Escalera descendente', duration: 65,
       subtitle: 'AMRAP 8 · FOR TIME 50-40-30-20-10 · AMRAP 12',
       format: 'Warmup AMRAP 8 · Main: FOR TIME Ladder 50-40-30-20-10 · Finisher AMRAP 12 min alternos (sprint/plank)',
       exercises: ['Cal máquina o 500/400/300/200/100m run', 'DB Power Clean', 'DB Push Press'],
     },
     {
-      id: 'HX_F', name: 'WOD Stations 400m', duration: 45,
+      id: 'HX_F', name: 'WOD: Estaciones + 400m', duration: 45,
       subtitle: 'AMRAP 9 warmup · AMRAP 26 ladder 10-20-30-40-50',
       format: 'Warmup AMRAP 9 · Main AMRAP 26: Ladder 10-20-30-40-50',
       exercises: ['DB Row', 'DB Swing to Snatch', 'DB Press', 'DB Russian Twist'],
     },
     {
-      id: 'HX_G', name: 'EMOM + AMRAP Hybrid', duration: 55,
+      id: 'HX_G', name: 'EMOM + AMRAP', duration: 55,
       subtitle: 'EMOM 20 min · AMRAP 14 min',
       format: 'Block 1 EMOM 20: 45s cardio | 8/8 front rack lunges | 45s bicycle crunch | 4 man makers\nBlock 2 AMRAP 14: 8 RDL | 20/20s single arm plank | 15 burpees',
     },
     {
-      id: 'HX_H', name: 'E3MOM Core + Cardio Intervals', duration: 45,
+      id: 'HX_H', name: 'E3MOM: Core y cardio', duration: 45,
       subtitle: 'E3MOM x4 · Intervalos cardio+fuerza 19 min',
       format: 'Block 1 E3MOM x4 (12 min): side bends | windmills | cardio moderado\nBlock 2 Intervalos 19 min: 5-4-3-2-1 min cardio alternado con KB swings, upright row, DB drag, heels over DB',
     },
     {
-      id: 'HX_I', name: 'Sled + Stations WOD', duration: 55,
+      id: 'HX_I', name: '2min ON / 1min OFF', duration: 55,
       subtitle: '2 min ON / 1 min OFF · 400m entre estaciones',
       format: '2 min ON / 1 min OFF · 400m entre cada cambio de estación',
       stations: ['Ergs (remo)', 'Wall balls', 'B2P (burpee to plate)', 'Farmer carry', 'Walking lunges'],
     },
     {
-      id: 'HX_J', name: 'HYROX Race Prep WOD', duration: 60,
+      id: 'HX_J', name: 'WOD: Prep carrera', duration: 60,
       subtitle: 'FOR TIME · 4 rondas · 400m entre rondas',
       format: '4 rondas FOR TIME · 400m run o 22 cal entre rondas',
       exercises: ['18 cal (máquina)', '40 wall balls', '40m walking lunges', '40 B2P (burpee to plate)'],

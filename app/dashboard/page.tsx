@@ -151,7 +151,8 @@ export default async function TodayPage() {
   const color        = dayType ? getDayTypeColor(dayType) : '#888888'
   const typeLabel    = dayType ? getDayTypeLabel(dayType) : null
   const isTodayDone  = todayRes.data ? completedSet.has(todayRes.data.id) : false
-  const firstBlock   = nextWorkout ? ((nextWorkout.blocks ?? []) as WorkoutBlock[])[0] : null
+  const allBlocks    = nextWorkout ? (nextWorkout.blocks ?? []) as WorkoutBlock[] : []
+  const firstBlock   = allBlocks.find(b => b.label !== 'Calentamiento') ?? allBlocks[0] ?? null
   const variantName  = firstBlock?.label ?? typeLabel ?? ''
   const isRaceDay    = dayType === 'race_day'
 

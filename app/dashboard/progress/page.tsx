@@ -12,6 +12,7 @@ interface HistoryRow {
   completed_at: string
   duration_seconds: number | null
   rating: number | null
+  metrics: Record<string, unknown> | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workouts: any
 }
@@ -40,7 +41,7 @@ export default async function ProgressPage() {
       .order('completed_at', { ascending: true }),
     supabase
       .from('completed_workouts')
-      .select('completed_at, duration_seconds, rating, workouts(day_type, duration_minutes, blocks)')
+      .select('completed_at, duration_seconds, rating, metrics, workouts(day_type, duration_minutes, blocks)')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: false })
       .limit(10),
@@ -122,16 +123,31 @@ export default async function ProgressPage() {
     return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10
   }
 
-  // Build history items
+  const ACTIVITY_TYPE_TO_DAY_TYPE: Record<string, string> = {
+    run:      'run_day',
+    strength: 'strength_lower_day',
+    hyrox:    'hyrox_day',
+  }
+  const ACTIVITY_TYPE_LABEL: Record<string, string> = {
+    run:      'Carrera manual',
+    strength: 'Gym manual',
+    hyrox:    'HYROX manual',
+    other:    'Actividad manual',
+  }
+
+  // Build history items — handle both plan workouts and manual entries
   const historyItems = history.map(h => {
-    const w = h.workouts
+    const w          = h.workouts
+    const actType    = (h.metrics?.['activity_type'] as string) ?? 'other'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allBlocks  = w?.blocks as any[]
+    const mainBlock  = allBlocks?.find((b: any) => b.label !== 'Calentamiento') ?? allBlocks?.[0]
     return {
       completed_at:     h.completed_at,
       duration_seconds: h.duration_seconds,
       rating:           h.rating,
-      day_type:         w?.day_type ?? '',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      label:            (w?.blocks as any)?.[0]?.label ?? '',
+      day_type:         w?.day_type ?? ACTIVITY_TYPE_TO_DAY_TYPE[actType] ?? '',
+      label:            w ? (mainBlock?.label ?? '') : (ACTIVITY_TYPE_LABEL[actType] ?? 'Actividad manual'),
     }
   })
 

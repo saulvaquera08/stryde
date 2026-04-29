@@ -17,7 +17,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
-      <main className="pb-28 max-w-lg mx-auto">
+      <main
+        className="max-w-lg mx-auto"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 68px)',
+        }}
+      >
         {children}
       </main>
       <BottomNav />

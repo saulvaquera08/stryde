@@ -116,6 +116,7 @@ export async function logManualActivity(data: {
     duration_seconds: data.duration_seconds,
     rating:           null,
     notes:            data.notes ?? null,
+    metrics:          { activity_type: data.activity_type },
   })
 
   if (error) throw new Error(error.message)
