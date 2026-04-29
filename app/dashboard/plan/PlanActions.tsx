@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, MoreHorizontal } from 'lucide-react'
 import LogActivityModal from './LogActivityModal'
-import MoveWorkoutModal from './MoveWorkoutModal'
+import WorkoutOptionsModal from './MoveWorkoutModal'
 
 // ── Log Activity FAB ─────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ export function MoveWorkoutButton({ workoutId, currentDate, workoutLabel }: Move
       </button>
 
       {open && (
-        <MoveWorkoutModal
+        <WorkoutOptionsModal
           workoutId={workoutId}
           currentDate={currentDate}
           workoutLabel={workoutLabel}

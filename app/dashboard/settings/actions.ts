@@ -66,6 +66,23 @@ export async function updateTrainingDays(trainingDays: string[]) {
   revalidatePath('/dashboard/settings')
 }
 
+export async function skipWorkout(workoutId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('workouts')
+    .delete()
+    .eq('id', workoutId)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/plan')
+  revalidatePath('/dashboard')
+}
+
 export async function moveWorkout(workoutId: string, newDate: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
