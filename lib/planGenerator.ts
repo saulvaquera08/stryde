@@ -268,30 +268,67 @@ const RUN_WARMUPS = [
 ]
 
 // ─── Slot definitions ─────────────────────────────────────────────────────────
-// Slots ordered to alternate intensity naturally.
-// 5-day plan: SL(lower) RI(intervals) HX(hyrox) SU(upper) RL(long)
-// Days with rest between hard sessions are the user's responsibility at onboarding.
+// SL/SL2 = strength lower (SL2 uses +3 index offset for variety)
+// SU/SU2 = strength upper (SU2 uses +3 offset)
+// RI/RI2 = run intervals (RI2 uses +2 offset, placed non-adjacent)
+// RT     = run tempo
+// HX     = hyrox simulation
+// RL     = long run
+// RZ     = zone 2 easy run
 
-type SlotKey = 'SL' | 'RI' | 'HX' | 'SU' | 'RL' | 'RZ'
+type SlotKey = 'SL' | 'SL2' | 'RI' | 'RI2' | 'HX' | 'SU' | 'SU2' | 'RL' | 'RZ' | 'RT'
 
 const SLOT_DAY_TYPE: Record<SlotKey, DayType> = {
-  SL: 'strength_lower_day',
-  RI: 'run_day',
-  HX: 'hyrox_day',
-  SU: 'strength_upper_day',
-  RL: 'run_day',
-  RZ: 'run_day',
+  SL:  'strength_lower_day', SL2: 'strength_lower_day',
+  SU:  'strength_upper_day', SU2: 'strength_upper_day',
+  RI:  'run_day',            RI2: 'run_day',
+  HX:  'hyrox_day',
+  RL:  'run_day',
+  RZ:  'run_day',
+  RT:  'run_day',
 }
 
-// 3 days → slots 1, 3, 5 (lower, hyrox, long)
-// 4 days → slots 1, 2, 3, 5
-// 5 days → slots 1, 2, 3, 4, 5
-// 6 days → all 5 + extra z2
-const SLOTS_BY_COUNT: Record<number, SlotKey[]> = {
+// ─── Goal-specific slot maps ──────────────────────────────────────────────────
+// Ordered to avoid consecutive high-intensity days.
+
+// HYROX: hybrid — strength + running + hyrox sim
+const HYROX_SLOTS: Record<number, SlotKey[]> = {
   3: ['SL', 'HX', 'RL'],
   4: ['SL', 'RI', 'HX', 'RL'],
   5: ['SL', 'RI', 'HX', 'SU', 'RL'],
   6: ['SL', 'RI', 'HX', 'SU', 'RL', 'RZ'],
+}
+
+// RUNNING (21k / 10k / 5k): pure running — long + intervals + tempo + easy
+// Intervals (H) are never adjacent: RL(M)·RI(H)·RZ(L)·RT(M)·RI2(H)·RZ(L)
+const RUNNING_SLOTS: Record<number, SlotKey[]> = {
+  3: ['RL', 'RI', 'RZ'],
+  4: ['RL', 'RI', 'RT', 'RZ'],
+  5: ['RL', 'RI', 'RZ', 'RT', 'RI2'],
+  6: ['RL', 'RI', 'RZ', 'RT', 'RI2', 'RZ'],
+}
+
+// STRENGTH: pure gym — lower + upper alternated with easy cardio
+const STRENGTH_SLOTS: Record<number, SlotKey[]> = {
+  3: ['SL', 'SU', 'SL2'],
+  4: ['SL', 'SU', 'SL2', 'SU2'],
+  5: ['SL', 'SU', 'RZ', 'SL2', 'SU2'],
+  6: ['SL', 'SU', 'RZ', 'SL2', 'SU2', 'RZ'],
+}
+
+// RECOMP: strength-dominant with cardio
+const RECOMP_SLOTS: Record<number, SlotKey[]> = {
+  3: ['SL', 'SU', 'RZ'],
+  4: ['SL', 'SU', 'SL2', 'RZ'],
+  5: ['SL', 'SU', 'RZ', 'SL2', 'SU2'],
+  6: ['SL', 'SU', 'RZ', 'SL2', 'SU2', 'RI'],
+}
+
+function getSlotMap(primaryGoal: string): Record<number, SlotKey[]> {
+  if (['21k', '10k', '5k'].includes(primaryGoal)) return RUNNING_SLOTS
+  if (primaryGoal === 'strength')                  return STRENGTH_SLOTS
+  if (primaryGoal === 'recomp')                    return RECOMP_SLOTS
+  return HYROX_SLOTS
 }
 
 const DAY_TO_NUM: Record<string, number> = {
@@ -299,10 +336,11 @@ const DAY_TO_NUM: Record<string, number> = {
   friday: 5, saturday: 6, sunday: 7,
 }
 
-function buildSchedule(trainingDays: string[]): { dayOfWeek: number; slot: SlotKey }[] {
-  const count  = Math.min(Math.max(trainingDays.length, 3), 6)
-  const slots  = SLOTS_BY_COUNT[count] ?? SLOTS_BY_COUNT[5]
-  const sorted = [...trainingDays]
+function buildSchedule(trainingDays: string[], primaryGoal: string): { dayOfWeek: number; slot: SlotKey }[] {
+  const count   = Math.min(Math.max(trainingDays.length, 3), 6)
+  const slotMap = getSlotMap(primaryGoal)
+  const slots   = slotMap[count] ?? slotMap[5]
+  const sorted  = [...trainingDays]
     .sort((a, b) => (DAY_TO_NUM[a] ?? 0) - (DAY_TO_NUM[b] ?? 0))
     .slice(0, count)
 
@@ -406,26 +444,32 @@ function pickVariant(slot: SlotKey, weekNum: number, phase: TrainingPhase): Libr
     return LIBRARY.hyrox_sim[idx]
   }
 
-  // Pick pool based on slot + phase
+  // Pick pool + optional index offset based on slot
   let pool: LibraryVariant[]
+  let offset = 0
+
   switch (slot) {
-    case 'SL': pool = LIBRARY.strength_lower; break
-    case 'SU': pool = LIBRARY.strength_upper; break
-    case 'RI': pool = (phase === 'taper') ? LIBRARY.run_tempo    : LIBRARY.run_intervals; break
-    case 'RZ': pool = LIBRARY.run_z2; break
+    case 'SL':  pool = LIBRARY.strength_lower; break
+    case 'SL2': pool = LIBRARY.strength_lower; offset = 3; break
+    case 'SU':  pool = LIBRARY.strength_upper; break
+    case 'SU2': pool = LIBRARY.strength_upper; offset = 3; break
+    case 'RI':  pool = (phase === 'taper') ? LIBRARY.run_tempo : LIBRARY.run_intervals; break
+    case 'RI2': pool = (phase === 'taper') ? LIBRARY.run_tempo : LIBRARY.run_intervals; offset = 2; break
+    case 'RT':  pool = LIBRARY.run_tempo; break
+    case 'RZ':  pool = LIBRARY.run_z2; break
     case 'RL':
-      if (phase === 'taper')                  pool = LIBRARY.run_tempo
-      else if (phase === 'base')              pool = LIBRARY.run_z2
-      else                                    pool = LIBRARY.run_long
+      if (phase === 'taper')     pool = LIBRARY.run_tempo
+      else if (phase === 'base') pool = LIBRARY.run_z2
+      else                       pool = LIBRARY.run_long
       break
-    default:   pool = LIBRARY.run_z2
+    default: pool = LIBRARY.run_z2
   }
 
-  if (phase === 'taper') return pool[0]                   // always lowest volume
-  if (phase === 'peak')  return pool[pool.length - 1]     // always most intense
+  if (phase === 'taper') return pool[0]               // always lowest volume
+  if (phase === 'peak')  return pool[pool.length - 1] // always most intense
 
-  // Normal A→B→C→D rotation
-  const idx = (weekNum - 1) % pool.length
+  // Rotation with optional offset for variety between sibling slots
+  const idx = ((weekNum - 1) + offset) % pool.length
   return pool[idx]
 }
 
@@ -438,15 +482,16 @@ function slotIntensity(slot: SlotKey, phase: TrainingPhase): IntensityLevel {
     return 'low' // base is all low-moderate
   }
   if (phase === 'peak' || phase === 'specific') {
-    if (slot === 'RI') return 'high'  // intervals = único día verdaderamente high
-    if (slot === 'HX') return 'moderate' // hyrox sim es exigente pero no high (evita consecutivo)
-    if (slot === 'SL' || slot === 'SU') return 'moderate'
-    if (slot === 'RL') return 'moderate'
+    if (slot === 'RI' || slot === 'RI2') return 'high'
+    if (slot === 'HX') return 'moderate'
+    if (slot === 'SL' || slot === 'SL2' || slot === 'SU' || slot === 'SU2') return 'moderate'
+    if (slot === 'RL' || slot === 'RT') return 'moderate'
     return 'low'
   }
   // build
-  if (slot === 'RI') return 'moderate'
+  if (slot === 'RI' || slot === 'RI2') return 'moderate'
   if (slot === 'HX') return 'moderate'
+  if (slot === 'RT') return 'moderate'
   if (slot === 'RZ') return 'low'
   return 'moderate'
 }
@@ -584,8 +629,8 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
   const totalWeeks    = calcTotalWeeks(profile.goals)
   const endDate       = addDays(startDate, totalWeeks * 7 - 1)
   const periodization = buildPeriodization(totalWeeks)
-  const schedule      = buildSchedule(profile.training_days)
   const primary       = getPrimaryGoal(profile.goals)
+  const schedule      = buildSchedule(profile.training_days, primary)
 
   const phaseMap: Record<number, TrainingPhase> = {}
   periodization.forEach(({ phase }, i) => { phaseMap[i + 1] = phase })

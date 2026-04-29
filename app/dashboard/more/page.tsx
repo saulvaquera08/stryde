@@ -216,6 +216,7 @@ export default async function MorePage() {
       {/* Settings */}
       <SectionLabel icon={<Settings size={11} />}>SETTINGS</SectionLabel>
       <div className="bg-[#141414] border border-[#1F1F1F] rounded-[22px] overflow-hidden mb-5">
+        <SettingRow href="/dashboard/settings" icon={<Calendar size={16} className="text-[#888]" strokeWidth={1.8} />} label="Días de entrenamiento" />
         <SettingRowStatic icon={<Bell size={16} className="text-[#888]" strokeWidth={1.8} />} label="Notifications" value="On" />
         <SettingRowStatic icon={<Settings size={16} className="text-[#888]" strokeWidth={1.8} />} label="Units" value="Metric" last />
       </div>

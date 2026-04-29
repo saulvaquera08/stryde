@@ -67,7 +67,7 @@ async function buildContext(userId: string): Promise<CoachContext> {
     .order('completed_at', { ascending: false })
     .limit(7)
 
-  const completedWorkoutIds = recentRes.data?.map(c => c.workout_id) ?? []
+  const completedWorkoutIds = (recentRes.data ?? []).map(c => c.workout_id).filter((id): id is string => id !== null)
 
   let recentCompleted: CoachContext['recentCompleted'] = []
   if (completedWorkoutIds.length > 0) {
@@ -77,7 +77,7 @@ async function buildContext(userId: string): Promise<CoachContext> {
       .in('id', completedWorkoutIds)
     const workoutMap = new Map((workoutsRes.data ?? []).map(w => [w.id, w.day_type]))
     recentCompleted = (recentRes.data ?? []).map(c => ({
-      day_type: workoutMap.get(c.workout_id) ?? 'Entrenamiento',
+      day_type: c.workout_id ? (workoutMap.get(c.workout_id) ?? 'Entrenamiento') : 'Entrenamiento',
       rating: c.rating,
       completed_at: c.completed_at,
     }))

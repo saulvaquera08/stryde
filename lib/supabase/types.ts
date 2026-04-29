@@ -181,7 +181,7 @@ export type Database = {
       completed_workouts: {
         Row: {
           id: string
-          workout_id: string
+          workout_id: string | null
           user_id: string
           completed_at: string
           rating: number | null
@@ -191,7 +191,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          workout_id: string
+          workout_id: string | null
           user_id: string
           completed_at?: string
           rating?: number | null

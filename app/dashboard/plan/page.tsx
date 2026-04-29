@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Check, ChevronLeft, ChevronRight, Moon, Zap, TrendingUp, Dumbbell } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Zap, TrendingUp, Dumbbell } from 'lucide-react'
 import { getDayTypeLabel, getDayTypeColor } from '@/lib/workout-utils'
 import { PHASE_LABELS, PHASE_COLORS, type TrainingPhase } from '@/lib/planGenerator'
+import { LogActivityFAB, MoveWorkoutButton } from './PlanActions'
 
 const DOW = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
@@ -164,10 +165,13 @@ export default async function PlanPage({
 
       {/* Section label */}
       <div className="flex justify-between items-center mb-3">
-        <span className="font-mono text-[10px] text-[#444] tracking-[0.18em] font-semibold uppercase">This week</span>
-        <span className="font-mono text-[10px] text-[#444] tracking-[0.1em]">
-          {weekDone} DONE · {activeWorkouts.length - weekDone} LEFT
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10px] text-[#444] tracking-[0.18em] font-semibold uppercase">This week</span>
+          <span className="font-mono text-[10px] text-[#444] tracking-[0.1em]">
+            {weekDone} DONE · {activeWorkouts.length - weekDone} LEFT
+          </span>
+        </div>
+        <LogActivityFAB />
       </div>
 
       {/* Workout rows */}
@@ -176,7 +180,6 @@ export default async function PlanPage({
           const iso     = date.toISOString().split('T')[0]
           const workout = workoutByDate[iso]
           const isToday = iso === todayISO
-          const isPast  = iso < todayISO
           const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
 
           if (!workout) {
@@ -245,7 +248,7 @@ export default async function PlanPage({
                 <p className="text-white text-[14px] font-semibold leading-snug">{blockLabel}</p>
               </div>
 
-              <div className="shrink-0 flex flex-col items-end gap-1">
+              <div className="shrink-0 flex items-center gap-2">
                 <span className="font-mono text-[12px] text-[#888] font-semibold">
                   {workout.duration_minutes}m
                 </span>
@@ -254,8 +257,12 @@ export default async function PlanPage({
                     <Check size={11} className="text-[#C8FF00]" strokeWidth={3} />
                   </div>
                 )}
-                {!isDone && !isPast && (
-                  <ChevronRight size={14} className="text-[#333]" />
+                {!isDone && (
+                  <MoveWorkoutButton
+                    workoutId={workout.id}
+                    currentDate={workout.scheduled_date!}
+                    workoutLabel={blockLabel}
+                  />
                 )}
               </div>
             </Link>
