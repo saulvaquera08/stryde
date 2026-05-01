@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Zap, Calendar, BarChart2, MoreHorizontal } from 'lucide-react'
+import { Zap, Calendar, BarChart2, LayoutGrid, MoreHorizontal } from 'lucide-react'
 
 const TABS = [
-  { href: '/dashboard',          label: 'Today',    Icon: Zap            },
-  { href: '/dashboard/plan',     label: 'Plan',     Icon: Calendar       },
-  { href: '/dashboard/progress', label: 'Stats',    Icon: BarChart2      },
-  { href: '/dashboard/more',     label: 'More',     Icon: MoreHorizontal },
+  { href: '/dashboard',           label: 'Today',    Icon: Zap          },
+  { href: '/dashboard/plan',      label: 'Plan',     Icon: Calendar     },
+  { href: '/dashboard/progress',  label: 'Stats',    Icon: BarChart2    },
+  { href: '/dashboard/programs',  label: 'Programas',Icon: LayoutGrid   },
+  { href: '/dashboard/more',      label: 'Más',      Icon: MoreHorizontal },
 ]
 
 export default function BottomNav() {
