@@ -308,11 +308,11 @@ export default async function TodayPage() {
                   {new Date(nextDate + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' })}
                 </p>
               )}
-              <h2 className="font-bold leading-[1.05] mt-3 text-[26px] tracking-tight">
+              <h2 className="font-bold leading-[1.1] mt-2 text-[20px] tracking-tight line-clamp-2">
                 {variantName}
               </h2>
               {firstBlock?.format && (
-                <p className="text-[#888] text-[13px] mt-1 line-clamp-2">{firstBlock.format}</p>
+                <p className="text-[#888] text-[12px] mt-1 line-clamp-2">{firstBlock.format.split('\n')[0]}</p>
               )}
             </div>
             <div

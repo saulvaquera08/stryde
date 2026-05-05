@@ -35,7 +35,7 @@ function BlockSection({ block }: { block: WorkoutBlock }) {
       {/* Cardio / interval format */}
       {block.format && (
         <div className="mb-2">
-          <p className="text-white text-sm whitespace-pre-line">{block.format}</p>
+          <p className="text-[#aaa] text-sm whitespace-pre-line break-words leading-relaxed">{block.format}</p>
           {(block.rpe || block.hr_zone || block.duration_min || block.rest) && (
             <div className="flex gap-3 mt-2">
               {block.rpe && <span className="text-[#555555] text-xs">RPE {block.rpe}</span>}
@@ -68,17 +68,17 @@ function BlockSection({ block }: { block: WorkoutBlock }) {
                 i < block.exercises!.length - 1 ? 'border-b border-[#1A1A1A]' : ''
               }`}
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium">{ex.name}</p>
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-white text-sm font-medium leading-snug">{ex.name}</p>
                 {ex.notes && <p className="text-[#555555] text-xs mt-0.5 italic">{ex.notes}</p>}
               </div>
-              <div className="text-right shrink-0 ml-4">
+              <div className="text-right shrink-0">
                 {ex.sets && ex.reps ? (
-                  <p className="text-[#888888] text-sm font-semibold">{ex.sets} × {ex.reps}</p>
+                  <p className="text-[#888888] text-sm font-semibold whitespace-nowrap">{ex.sets} × {ex.reps}</p>
                 ) : ex.reps ? (
-                  <p className="text-[#888888] text-sm font-semibold">{ex.reps}</p>
+                  <p className="text-[#888888] text-sm font-semibold whitespace-nowrap">{ex.reps}</p>
                 ) : null}
-                {ex.rest && <p className="text-[#444444] text-xs">{ex.rest}</p>}
+                {ex.rest && <p className="text-[#444444] text-xs whitespace-nowrap">{ex.rest}</p>}
               </div>
             </div>
           ))}
@@ -116,7 +116,7 @@ export default async function WorkoutDetailPage({
   const color      = getDayTypeColor(workout.day_type)
   const typeLabel  = getDayTypeLabel(workout.day_type)
   const blocks     = (workout.blocks ?? []) as WorkoutBlock[]
-  const firstBlock = blocks[0]
+  const firstBlock = blocks.find(b => b.label !== 'Calentamiento' && b.label !== 'Enfriamiento') ?? blocks[0]
 
   const dateLabel = new Date(workout.scheduled_date + 'T12:00:00').toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -159,7 +159,7 @@ export default async function WorkoutDetailPage({
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-white leading-snug mb-0.5">
+      <h1 className="text-[22px] font-bold text-white leading-snug mb-0.5 break-words">
         {firstBlock?.label ?? typeLabel}
       </h1>
       <p className="text-[#555555] text-xs mb-1 capitalize">{dateLabel}</p>
