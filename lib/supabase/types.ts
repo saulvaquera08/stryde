@@ -1,4 +1,4 @@
-export type GoalType = 'hyrox' | '21k' | '5k' | '10k' | 'strength' | 'recomp'
+export type GoalType = 'hyrox' | '42k' | '21k' | '15k' | '10k' | '5k' | 'strength' | 'hypertrophy' | 'recomp' | 'general'
 export type IntensityLevel = 'low' | 'moderate' | 'high'
 
 export interface WorkoutBlock {

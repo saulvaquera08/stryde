@@ -32,6 +32,24 @@ export interface PlanProfile {
   training_days: string[]
   equipment:     string
   goals:         Array<{ type: string; race_date?: string }>
+
+  // v2 extended fields
+  program_type?:    'gym' | 'run' | 'hyrox' | string
+  session_duration?: string          // '45' | '60' | '75' | '90' | '90+'
+  injuries?:         string[]
+
+  // GYM
+  gym_goal?:         string          // 'strength' | 'hypertrophy' | 'recomp' | 'general'
+  priority_muscles?: string[]
+
+  // RUN
+  run_distance?:     string          // '5k' | '10k' | '15k' | '21k' | '42k'
+  run_weekly_km?:    string
+
+  // HYROX
+  hyrox_experience?:     string      // 'never' | 'once_twice' | 'multiple'
+  hyrox_weak_stations?:  string[]
+  hyrox_strength_cardio?: number     // 1–5
 }
 
 export interface GeneratedPlan {
