@@ -1,14 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Flag, TrendingUp, Dumbbell, Calendar, Settings, Bell, ChevronRight, Flame, Zap } from 'lucide-react'
+import { Flag, TrendingUp, Calendar, Settings, Bell, ChevronRight, Flame, Zap, BarChart2 } from 'lucide-react'
+import RegeneratePlanButton from './RegeneratePlanButton'
 
 const GOAL_LABELS: Record<string, string> = {
-  hyrox:    'HYROX',
-  '21k':    '21K Half Marathon',
-  '5k':     '5K',
-  '10k':    '10K',
-  strength: 'Strength',
-  recomp:   'Body recomp',
+  hyrox:       'HYROX',
+  '42k':       'Maratón',
+  '21k':       'Media Maratón',
+  '15k':       '15K',
+  '10k':       '10K',
+  '5k':        '5K',
+  strength:    'Fuerza',
+  hypertrophy: 'Hipertrofia',
+  recomp:      'Recomposición',
+  general:     'General',
 }
 
 export default async function MorePage() {
@@ -209,8 +214,8 @@ export default async function MorePage() {
       {/* Actions */}
       <SectionLabel icon={<Zap size={11} />}>ACTIONS</SectionLabel>
       <div className="bg-[#141414] border border-[#1F1F1F] rounded-[22px] overflow-hidden mb-3">
-        <SettingRow href="/onboarding" icon={<Calendar size={16} className="text-[#888]" strokeWidth={1.8} />} label="Regenerate plan" />
-        <SettingRow href="/dashboard/progress" icon={<Dumbbell size={16} className="text-[#888]" strokeWidth={1.8} />} label="View stats" last />
+        <RegeneratePlanButton />
+        <SettingRow href="/dashboard/progress" icon={<BarChart2 size={16} className="text-[#888]" strokeWidth={1.8} />} label="View stats" last />
       </div>
 
       {/* Settings */}

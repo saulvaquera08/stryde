@@ -12,10 +12,12 @@ function BlockSection({ block }: { block: WorkoutBlock }) {
     strength:  'FUERZA',
     power:     'POTENCIA',
     cardio:    'CARDIO',
+    hyrox:     'ENTRENAMIENTO',
     hiit:      'HIIT',
     accessory: 'ACCESORIO',
     mobility:  'MOVILIDAD',
     cooldown:  'ENFRIAMIENTO',
+    rest:      'DESCANSO',
   }
   const sectionLabel = sectionLabels[block.type] ?? block.label?.toUpperCase() ?? block.type.toUpperCase()
 
