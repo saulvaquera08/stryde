@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, Check, TrendingUp, Dumbbell, Zap, Activity } from 'lucide-react'
+import { X, Check, TrendingUp, Dumbbell, Activity } from 'lucide-react'
 import { logManualActivity } from '../settings/actions'
 
 const ACTIVITY_TYPES = [
-  { key: 'run',      label: 'Correr',    icon: TrendingUp, color: '#C8FF00' },
+  { key: 'run',      label: 'Correr',    icon: TrendingUp, color: '#60A5FA' },
   { key: 'strength', label: 'Gym',       icon: Dumbbell,   color: '#A78BFA' },
-  { key: 'hyrox',   label: 'HYROX',     icon: Zap,        color: '#FF6B35' },
-  { key: 'other',   label: 'Otro',      icon: Activity,   color: '#888888' },
+  { key: 'other',    label: 'Otro',      icon: Activity,   color: '#888888' },
 ]
 
 interface Props {

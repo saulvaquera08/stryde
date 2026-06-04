@@ -133,7 +133,7 @@ function buildPrompt(ctx: CoachContext): string {
     const phaseDesc: Record<string, string> = {
       base:     'Fase BASE — construir base aeróbica y fuerza general, volumen moderado',
       build:    'Fase BUILD — aumentar volumen semana a semana, más intervalos y sesiones específicas',
-      specific: 'Fase SPECIFIC — volumen alto (95%), simulaciones HYROX largas, intervalos exigentes',
+      specific: 'Fase SPECIFIC — volumen alto (95%), sesiones específicas largas, intervalos exigentes',
       peak:     'Fase PEAK — volumen máximo, simulaciones de competencia, largo runs intensos',
       taper:    'Fase TAPER — reducir volumen, mantener intensidad, preparar el cuerpo para competir',
     }

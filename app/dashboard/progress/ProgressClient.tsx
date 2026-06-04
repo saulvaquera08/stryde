@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Zap, Dumbbell, TrendingUp, Clock, Check } from 'lucide-react'
+import { Dumbbell, TrendingUp, Clock, Check, Activity } from 'lucide-react'
 
 type Tab = 'week' | 'month' | 'year'
 
@@ -26,24 +26,24 @@ interface ProgressClientProps {
   history: HistoryItem[]
 }
 
-const DAY_TYPE_COLOR: Record<string, string> = {
-  run_day:              '#C8FF00',
-  strength_lower_day:   '#A78BFA',
-  strength_upper_day:   '#A78BFA',
-  hyrox_day:            '#FF6B35',
+function getDayColor(dayType: string): string {
+  if (dayType.startsWith('strength_')) return '#A78BFA'
+  if (dayType.startsWith('run_'))      return '#60A5FA'
+  if (dayType === 'race_day')          return '#C8FF00'
+  return '#888'
 }
 
-const DAY_TYPE_LABEL: Record<string, string> = {
-  run_day:              'RUN',
-  strength_lower_day:   'LIFT',
-  strength_upper_day:   'LIFT',
-  hyrox_day:            'HYROX',
+function getDayLabel(dayType: string): string {
+  if (dayType.startsWith('strength_')) return 'GYM'
+  if (dayType.startsWith('run_'))      return 'RUN'
+  if (dayType === 'race_day')          return 'RACE'
+  return dayType.toUpperCase()
 }
 
 function WorkoutIcon({ dayType, size = 14 }: { dayType: string; size?: number }) {
-  if (dayType === 'hyrox_day') return <Zap size={size} className="text-current" />
-  if (dayType === 'run_day')   return <TrendingUp size={size} className="text-current" />
-  return <Dumbbell size={size} className="text-current" />
+  if (dayType.startsWith('run_') || dayType === 'race_day') return <TrendingUp size={size} className="text-current" />
+  if (dayType.startsWith('strength_'))                       return <Dumbbell size={size} className="text-current" />
+  return <Activity size={size} className="text-current" />
 }
 
 const BAR_LABELS: Record<Tab, string[]> = {
@@ -176,7 +176,7 @@ export default function ProgressClient({ hasData, bars, stats, history }: Progre
         </div>
         <div className="bg-[#141414] border border-[#1F1F1F] rounded-2xl p-[14px]">
           <div className="flex items-center gap-1.5 mb-2">
-            <Zap size={12} className="text-[#A78BFA]" strokeWidth={2.2} />
+            <Activity size={12} className="text-[#A78BFA]" strokeWidth={2.2} />
             <span className="font-mono text-[9px] text-[#888] tracking-[0.15em] font-bold">RPE</span>
           </div>
           <p className="font-mono text-[24px] font-bold tracking-[-0.02em] leading-none">
@@ -226,8 +226,8 @@ export default function ProgressClient({ hasData, bars, stats, history }: Progre
           </div>
           <div className="flex flex-col gap-1.5">
             {history.map((w, i) => {
-              const color = DAY_TYPE_COLOR[w.day_type] ?? '#888'
-              const typeL = DAY_TYPE_LABEL[w.day_type] ?? w.day_type.toUpperCase()
+              const color = getDayColor(w.day_type)
+              const typeL = getDayLabel(w.day_type)
               const mins  = w.duration_seconds != null ? Math.round(w.duration_seconds / 60) : null
               const date  = new Date(w.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 

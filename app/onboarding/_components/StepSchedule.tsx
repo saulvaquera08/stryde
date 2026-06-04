@@ -1,9 +1,15 @@
 'use client'
 
-import { ChevronLeft } from 'lucide-react'
-import type { OnboardingData, PreferredTime, SessionDuration } from '../types'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import type { OnboardingData, LevelType, EquipmentType } from '../types'
 
-const DAYS: { key: string; label: string }[] = [
+const LEVELS: { type: LevelType; label: string; desc: string }[] = [
+  { type: 'beginner',     label: 'Principiante', desc: 'Menos de 1 año entrenando consistentemente' },
+  { type: 'intermediate', label: 'Intermedio',   desc: '1–3 años, entrenas con regularidad' },
+  { type: 'advanced',     label: 'Avanzado',     desc: '+3 años, experiencia sólida' },
+]
+
+const DAYS_OF_WEEK = [
   { key: 'monday',    label: 'L' },
   { key: 'tuesday',   label: 'M' },
   { key: 'wednesday', label: 'X' },
@@ -13,159 +19,136 @@ const DAYS: { key: string; label: string }[] = [
   { key: 'sunday',    label: 'D' },
 ]
 
-const TIMES: { type: PreferredTime; icon: string; label: string }[] = [
-  { type: 'morning',   icon: '🌅', label: 'Mañana (6–11am)' },
-  { type: 'afternoon', icon: '☀️', label: 'Tarde (11am–5pm)' },
-  { type: 'evening',   icon: '🌙', label: 'Noche (5–10pm)' },
-  { type: 'flexible',  icon: '🔄', label: 'Flexible' },
+// Solo para GYM
+const EQUIPMENT: { type: EquipmentType; label: string; desc: string; icon: string }[] = [
+  { type: 'full_gym',  label: 'Gym completo', desc: 'Barras · Sled · Máquinas · Cables', icon: '🏋️' },
+  { type: 'basic_gym', label: 'Gym básico',   desc: 'Pesas libres · Barras · Pull-up',  icon: '💪' },
+  { type: 'home',      label: 'En casa',      desc: 'Mancuernas · Kettlebell · Bandas', icon: '🏠' },
 ]
 
-const DURATIONS: SessionDuration[] = ['45', '60', '75', '90', '90+']
-
-// Smart feedback per program + day count
-function smartFeedback(program: string, days: number): { ok: boolean; msg: string } | null {
-  if (days < 3) return { ok: false, msg: 'Selecciona al menos 3 días' }
-  if (program === 'gym') {
-    if (days === 3) return { ok: true,  msg: '✓ Perfecto para un plan Push/Pull/Legs' }
-    if (days === 4) return { ok: true,  msg: '✓ Ideal: Upper/Lower + Full body + extra' }
-    if (days === 5) return { ok: true,  msg: '✓ Excelente: máximo volumen por grupo muscular' }
-    if (days >= 6)  return { ok: true,  msg: '✓ Programa de alto volumen — descansa bien' }
-  }
-  if (program === 'run') {
-    if (days === 3) return { ok: true,  msg: '✓ Perfecto: 2 runs de calidad + 1 largo' }
-    if (days === 4) return { ok: true,  msg: '✓ Ideal: 3 runs + 1 día de fuerza' }
-    if (days === 5) return { ok: true,  msg: '✓ Muy completo: volumen + calidad + fuerza' }
-    if (days >= 6)  return { ok: true,  msg: '✓ Entrenador de alto rendimiento — prioriza el descanso' }
-  }
-  if (program === 'hyrox') {
-    if (days === 3) return { ok: false, msg: '⚠️ Recomendamos mín. 4 días para HYROX' }
-    if (days === 4) return { ok: true,  msg: '✓ Aceptable: 2 fuerza + 1 cardio + 1 específico' }
-    if (days === 5) return { ok: true,  msg: '✓ Óptimo: 2 fuerza + 2 cardio + 1 HYROX específico' }
-    if (days >= 6)  return { ok: true,  msg: '✓ Programa competitivo completo de 6 días' }
-  }
-  return null
-}
-
 interface Props {
-  data:     OnboardingData
-  onChange: (data: OnboardingData) => void
-  onNext:   () => void
-  onBack:   () => void
+  data: OnboardingData
+  onChange: (d: OnboardingData) => void
+  onNext: () => void
+  onBack: () => void
 }
 
 export default function StepSchedule({ data, onChange, onNext, onBack }: Props) {
-  const selected = data.training_days
+  const isGym = data.program_type === 'gym'
 
   function toggleDay(key: string) {
-    if (selected.includes(key)) {
-      if (selected.length <= 3) return
-      onChange({ ...data, training_days: selected.filter(d => d !== key) })
+    const sel = data.training_days
+    if (sel.includes(key)) {
+      if (sel.length <= 3) return // min 3
+      onChange({ ...data, training_days: sel.filter(d => d !== key) })
     } else {
-      if (selected.length >= 6) return
-      onChange({ ...data, training_days: [...selected, key] })
+      if (sel.length >= 6) return // max 6
+      onChange({ ...data, training_days: [...sel, key] })
     }
   }
 
-  const feedback = smartFeedback(data.program_type, selected.length)
-  const canContinue = selected.length >= 3 && !!data.session_duration
+  // Para RUN, el equipo no aplica
+  const equipmentValid = !isGym || !!data.equipment
+  const canContinue = !!data.level && data.training_days.length >= 3 && equipmentValid
 
   return (
     <div className="flex-1 flex flex-col px-6 pb-8 max-w-lg mx-auto w-full overflow-y-auto">
       <div className="flex-1 space-y-8">
-
-        {/* Days */}
         <div>
           <h1 className="text-[2rem] font-bold text-white leading-tight mb-1">
-            Horario y disponibilidad
+            Tu disponibilidad
           </h1>
-          <p className="text-[#888] text-sm mb-6">
-            Define cuándo y cuánto tiempo puedes entrenar
+          <p className="text-[#888888] text-sm">
+            El plan se adapta exactamente a tu horario
           </p>
+        </div>
 
-          <p className="text-white font-semibold text-sm mb-1">¿Qué días puedes entrenar?</p>
-          <p className="text-[#888] text-xs mb-4">Toca los días disponibles · mín. 3, máx. 6</p>
+        {/* Nivel */}
+        <div>
+          <p className="text-xs text-[#888888] uppercase tracking-widest mb-3">Nivel de experiencia</p>
+          <div className="space-y-2">
+            {LEVELS.map(({ type, label, desc }) => {
+              const sel = data.level === type
+              return (
+                <button
+                  key={type}
+                  onClick={() => onChange({ ...data, level: type })}
+                  className={`w-full p-4 rounded-xl border text-left transition-all duration-200 active:scale-[0.99] ${
+                    sel ? 'bg-[#C8FF00]/[0.06] border-[#C8FF00]' : 'bg-[#141414] border-[#222222] hover:border-[#3a3a3a]'
+                  }`}
+                >
+                  <div className={`font-semibold text-sm ${sel ? 'text-[#C8FF00]' : 'text-white'}`}>{label}</div>
+                  <div className="text-[#888888] text-xs mt-0.5">{desc}</div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-          <div className="grid grid-cols-7 gap-1.5">
-            {DAYS.map(({ key, label }) => {
-              const isSel  = selected.includes(key)
-              const maxed  = !isSel && selected.length >= 6
+        {/* Días disponibles */}
+        <div>
+          <p className="text-xs text-[#888888] uppercase tracking-widest mb-1">Días de entrenamiento</p>
+          <p className="text-[#555555] text-[11px] mb-3">Mínimo 3, máximo 6</p>
+          <div className="grid grid-cols-7 gap-2">
+            {DAYS_OF_WEEK.map(({ key, label }) => {
+              const sel = data.training_days.includes(key)
               return (
                 <button
                   key={key}
                   onClick={() => toggleDay(key)}
-                  disabled={maxed}
-                  className={`aspect-square flex items-center justify-center rounded-xl border font-bold text-sm transition-all active:scale-90 ${
-                    isSel
-                      ? 'bg-[#C8FF00] border-[#C8FF00] text-black'
-                      : maxed
-                      ? 'bg-[#0F0F0F] border-[#1A1A1A] text-[#333] cursor-not-allowed'
-                      : 'bg-[#141414] border-[#222] text-[#888]'
-                  }`}
+                  className={`
+                    aspect-square rounded-xl text-sm font-bold transition-all duration-200 active:scale-95
+                    ${sel
+                      ? 'bg-[#C8FF00] text-black'
+                      : 'bg-[#141414] border border-[#222222] text-[#555555] hover:border-[#3a3a3a] hover:text-[#888888]'
+                    }
+                  `}
                 >
                   {label}
                 </button>
               )
             })}
           </div>
-
-          {feedback && (
-            <p className={`text-xs mt-3 font-mono ${feedback.ok ? 'text-[#C8FF00]/80' : 'text-orange-400'}`}>
-              {feedback.msg}
-            </p>
-          )}
+          <p className="text-[#444444] text-[11px] mt-2 text-center">
+            {data.training_days.length} días seleccionados
+          </p>
         </div>
 
-        {/* Preferred time */}
-        <div>
-          <p className="text-white font-semibold text-sm mb-1">Horario preferido</p>
-          <p className="text-[#888] text-xs mb-4">Para recordatorios personalizados</p>
-          <div className="grid grid-cols-2 gap-2">
-            {TIMES.map(({ type, icon, label }) => {
-              const sel = data.preferred_time === type
-              return (
-                <button
-                  key={type}
-                  onClick={() => onChange({ ...data, preferred_time: type })}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-left transition-all active:scale-[0.99] ${
-                    sel ? 'border-[#C8FF00] bg-[#C8FF00]/10' : 'border-[#222] bg-[#141414]'
-                  }`}
-                >
-                  <span className="text-base">{icon}</span>
-                  <span className={`text-sm font-medium ${sel ? 'text-[#C8FF00]' : 'text-white'}`}>{label}</span>
-                </button>
-              )
-            })}
+        {/* Equipo — solo para GYM */}
+        {isGym && (
+          <div>
+            <p className="text-xs text-[#888888] uppercase tracking-widest mb-3">Equipamiento disponible</p>
+            <div className="space-y-2">
+              {EQUIPMENT.map(({ type, label, desc, icon }) => {
+                const sel = data.equipment === type
+                return (
+                  <button
+                    key={type}
+                    onClick={() => onChange({ ...data, equipment: type })}
+                    className={`w-full p-4 rounded-xl border text-left flex items-center gap-4 transition-all duration-200 active:scale-[0.99] ${
+                      sel ? 'bg-[#C8FF00]/[0.06] border-[#C8FF00]' : 'bg-[#141414] border-[#222222] hover:border-[#3a3a3a]'
+                    }`}
+                  >
+                    <span className="text-xl">{icon}</span>
+                    <div className="flex-1">
+                      <div className={`font-semibold text-sm ${sel ? 'text-[#C8FF00]' : 'text-white'}`}>{label}</div>
+                      <div className="text-[#555555] text-[11px] mt-0.5">{desc}</div>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${sel ? 'border-[#C8FF00]' : 'border-[#444444]'}`}>
+                      {sel && <div className="w-2.5 h-2.5 rounded-full bg-[#C8FF00]" />}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-
-        {/* Session duration */}
-        <div>
-          <p className="text-white font-semibold text-sm mb-1">Duración por sesión</p>
-          <p className="text-[#888] text-xs mb-4">Esto ajusta el volumen y la selección de ejercicios</p>
-          <div className="flex gap-2">
-            {DURATIONS.map(dur => {
-              const sel = data.session_duration === dur
-              return (
-                <button
-                  key={dur}
-                  onClick={() => onChange({ ...data, session_duration: dur })}
-                  className={`flex-1 py-3 rounded-xl border font-mono text-sm font-bold transition-all active:scale-95 ${
-                    sel ? 'border-[#C8FF00] bg-[#C8FF00]/10 text-[#C8FF00]' : 'border-[#222] bg-[#141414] text-[#888]'
-                  }`}
-                >
-                  {dur === '90+' ? '+90' : dur}
-                  {dur !== '90+' && <span className="font-sans text-[10px] ml-0.5 opacity-70">m</span>}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        )}
       </div>
 
-      <div className="flex gap-3 mt-8">
+      <div className="flex gap-3 mt-8 pt-4">
         <button
           onClick={onBack}
-          className="flex items-center justify-center w-14 py-4 rounded-xl border border-[#222] text-[#888] active:scale-95"
+          className="flex items-center justify-center w-14 py-4 rounded-xl border border-[#222222] text-[#888888] hover:border-[#444444] transition-colors active:scale-95"
         >
           <ChevronLeft size={18} />
         </button>
@@ -174,7 +157,7 @@ export default function StepSchedule({ data, onChange, onNext, onBack }: Props) 
           disabled={!canContinue}
           className="flex-1 bg-[#C8FF00] text-black font-bold py-4 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
         >
-          Continuar →
+          Continuar <ChevronRight size={18} />
         </button>
       </div>
     </div>

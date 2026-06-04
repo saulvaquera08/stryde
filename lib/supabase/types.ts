@@ -1,4 +1,4 @@
-export type GoalType = 'hyrox' | '42k' | '21k' | '15k' | '10k' | '5k' | 'strength' | 'hypertrophy' | 'recomp' | 'general'
+export type GoalType = '5k' | '10k' | 'half_marathon' | 'marathon' | 'strength' | 'recomp' | 'general_fitness'
 export type IntensityLevel = 'low' | 'moderate' | 'high'
 
 export interface WorkoutBlock {
@@ -40,6 +40,10 @@ export type Database = {
           injuries: string[] | null
           current_5k_time: string | null
           current_10k_time: string | null
+          current_half_marathon_time: string | null
+          current_marathon_time: string | null
+          program_type: string | null
+          gym_split: string | null
           onboarding_completed: boolean
           created_at: string
         }
@@ -57,6 +61,10 @@ export type Database = {
           injuries?: string[] | null
           current_5k_time?: string | null
           current_10k_time?: string | null
+          current_half_marathon_time?: string | null
+          current_marathon_time?: string | null
+          program_type?: string | null
+          gym_split?: string | null
           onboarding_completed?: boolean
           created_at?: string
         }
@@ -74,6 +82,10 @@ export type Database = {
           injuries?: string[] | null
           current_5k_time?: string | null
           current_10k_time?: string | null
+          current_half_marathon_time?: string | null
+          current_marathon_time?: string | null
+          program_type?: string | null
+          gym_split?: string | null
           onboarding_completed?: boolean
           created_at?: string
         }

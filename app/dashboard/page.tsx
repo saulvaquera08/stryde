@@ -1,19 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Dumbbell, TrendingUp, Activity, Flag, Bell, ChevronRight } from 'lucide-react'
+import { Dumbbell, TrendingUp, Activity, Flag, Bell, ChevronRight } from 'lucide-react'
 import { getDayTypeLabel, getDayTypeColor, getGreeting } from '@/lib/workout-utils'
 import { getCoachMessage } from '@/lib/coach'
 import { PHASE_LABELS, PHASE_COLORS, type TrainingPhase } from '@/lib/planGenerator'
 import type { WorkoutBlock } from '@/lib/supabase/types'
 
 const GOAL_LABELS: Record<string, string> = {
-  hyrox:    'HYROX',
-  '21k':    '21K',
-  '5k':     '5K',
-  '10k':    '10K',
-  strength: 'Fuerza',
-  recomp:   'Recomposición',
+  '5k':             '5K',
+  '10k':            '10K',
+  'half_marathon':  'Media Maratón',
+  'marathon':       'Maratón',
+  strength:         'Fuerza',
+  recomp:           'Recomposición',
+  general_fitness:  'General',
 }
 
 function Wordmark() {
@@ -29,10 +30,8 @@ function Wordmark() {
 }
 
 function DayTypeIcon({ dayType, size = 22 }: { dayType: string; size?: number }) {
-  if (dayType === 'hyrox_day' || dayType === 'race_day') return <Zap size={size} className="text-current" />
-  if (dayType === 'run_day')                             return <TrendingUp size={size} className="text-current" />
-  if (dayType === 'strength_lower_day')                  return <Dumbbell size={size} className="text-current" />
-  if (dayType === 'strength_upper_day')                  return <Dumbbell size={size} className="text-current" />
+  if (dayType.startsWith('run_') || dayType === 'race_day') return <TrendingUp size={size} className="text-current" />
+  if (dayType.startsWith('strength_'))                       return <Dumbbell size={size} className="text-current" />
   return <Activity size={size} className="text-current" />
 }
 
@@ -106,12 +105,10 @@ export default async function TodayPage() {
   const weekCompleted = weekWorkoutIds.filter(id => completedSet.has(id)).length
 
   // Per-discipline counts
-  const runW   = weekWorkouts.filter(w => w.day_type === 'run_day')
-  const liftW  = weekWorkouts.filter(w => w.day_type === 'strength_lower_day' || w.day_type === 'strength_upper_day')
-  const hyroxW = weekWorkouts.filter(w => w.day_type === 'hyrox_day')
+  const runW   = weekWorkouts.filter(w => w.day_type.startsWith('run_') || w.day_type === 'race_day')
+  const gymW   = weekWorkouts.filter(w => w.day_type.startsWith('strength_'))
   const runDone   = runW.filter(w => completedSet.has(w.id)).length
-  const liftDone  = liftW.filter(w => completedSet.has(w.id)).length
-  const hyroxDone = hyroxW.filter(w => completedSet.has(w.id)).length
+  const gymDone   = gymW.filter(w => completedSet.has(w.id)).length
 
   // Race goals sorted by proximity
   const goalsSorted = goals
@@ -183,7 +180,7 @@ export default async function TodayPage() {
       {/* Coach message */}
       {coachMessage && (
         <div className="flex items-start gap-2 mt-[14px] mb-[18px]">
-          <Zap size={13} className="text-[#C8FF00] shrink-0 mt-0.5" strokeWidth={2.2} />
+          <Activity size={13} className="text-[#C8FF00] shrink-0 mt-0.5" strokeWidth={2.2} />
           <p className="text-[#666] text-[13px] leading-relaxed">{coachMessage}</p>
         </div>
       )}
@@ -208,7 +205,7 @@ export default async function TodayPage() {
             <div>
               {primaryGoal ? (
                 <>
-                  <div className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-[#FF6B35]/10 text-[#FF6B35] font-mono text-[10px] font-bold tracking-[0.15em]">
+                  <div className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-[#C8FF00]/10 text-[#C8FF00] font-mono text-[10px] font-bold tracking-[0.15em]">
                     <Flag size={11} />
                     {GOAL_LABELS[primaryGoal.type] ?? primaryGoal.type.toUpperCase()}
                   </div>
@@ -262,7 +259,7 @@ export default async function TodayPage() {
                         : isPast
                         ? '#C8FF0055'
                         : isTaper
-                        ? '#FF6B3540'
+                        ? '#C8FF0040'
                         : '#1F1F1F',
                     }}
                   />
@@ -280,9 +277,9 @@ export default async function TodayPage() {
 
       {/* Hero workout card */}
       {isRaceDay ? (
-        <div className="rounded-[22px] border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6 mb-[14px] text-center">
+        <div className="rounded-[22px] border border-[#C8FF00]/30 bg-[#C8FF00]/5 p-6 mb-[14px] text-center">
           <p className="text-3xl mb-2">🏁</p>
-          <p className="text-[#FF6B35] font-bold tracking-widest text-sm font-mono">HOY ES EL DÍA</p>
+          <p className="text-[#C8FF00] font-bold tracking-widest text-sm font-mono">HOY ES EL DÍA</p>
           <p className="text-white text-sm mt-1">{firstBlock?.format ?? ''}</p>
         </div>
       ) : nextWorkout ? (
@@ -368,7 +365,7 @@ export default async function TodayPage() {
         <div className="bg-[#141414] border border-[#1F1F1F] rounded-[22px] p-4">
           <div className="flex justify-between items-center mb-[14px]">
             <span className="font-mono text-[10px] text-[#444] tracking-[0.18em] font-semibold">
-              HYBRID LOAD · WEEK {activeWeek}
+              TRAINING LOAD · WEEK {activeWeek}
             </span>
             <span className="font-mono text-[11px] text-[#888]">
               {weekCompleted}/{weekWorkouts.length} done
@@ -377,9 +374,8 @@ export default async function TodayPage() {
 
           <div className="flex flex-col gap-[10px]">
             {([
-              { label: 'RUN',   Icon: TrendingUp, done: runDone,   list: runW,   color: '#C8FF00' },
-              { label: 'LIFT',  Icon: Dumbbell,   done: liftDone,  list: liftW,  color: '#A78BFA' },
-              { label: 'HYROX', Icon: Zap,        done: hyroxDone, list: hyroxW, color: '#FF6B35' },
+              { label: 'GYM',   Icon: Dumbbell,   done: gymDone,   list: gymW,   color: '#A78BFA' },
+              { label: 'RUN',   Icon: TrendingUp,  done: runDone,   list: runW,   color: '#60A5FA' },
             ] as const).map(row => (
               <div key={row.label} className="flex items-center gap-3">
                 <div

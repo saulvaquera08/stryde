@@ -102,9 +102,6 @@ export async function regeneratePlan() {
     priority_muscles: profile?.priority_muscles ?? [],
     run_distance:     profile?.run_distance      ?? undefined,
     run_weekly_km:    profile?.run_weekly_km     ?? undefined,
-    hyrox_experience:    profile?.hyrox_experience    ?? undefined,
-    hyrox_weak_stations: profile?.hyrox_weak_stations ?? [],
-    hyrox_strength_cardio: profile?.hyrox_strength_cardio_balance ?? undefined,
   })
 
   const { data: newPlan, error: planErr } = await supabase

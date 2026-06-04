@@ -1,23 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { Dumbbell, TrendingUp, Zap, ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { Dumbbell, TrendingUp, ChevronRight, ChevronLeft } from 'lucide-react'
 import type { ProgramType, RunGoal, Variant } from '@/lib/programs/types'
 import { GYM_PROGRAM } from '@/lib/programs/gym'
 import { RUN_PROGRAMS } from '@/lib/programs/run'
-import { HYROX_PROGRAM } from '@/lib/programs/hyrox'
 import GymDayDetail from './GymDayDetail'
 import RunDayDetail from './RunDayDetail'
-import HyroxDayDetail from './HyroxDayDetail'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const RUN_GOALS: { value: RunGoal; label: string; sub: string }[] = [
-  { value: '5k',  label: '5K',         sub: '~25-35 min' },
-  { value: '10k', label: '10K',        sub: '~50-70 min' },
-  { value: '15k', label: '15K',        sub: '~80-100 min' },
-  { value: '21k', label: 'Media Maratón', sub: '~1:45-2:30 h' },
-  { value: '42k', label: 'Maratón',    sub: '~3:30-5:00 h' },
+  { value: '5k',            label: '5K',             sub: '~25-35 min' },
+  { value: '10k',           label: '10K',            sub: '~50-70 min' },
+  { value: 'half_marathon', label: 'Media Maratón',  sub: '~1:45-2:30 h' },
+  { value: 'marathon',      label: 'Maratón',        sub: '~3:30-5:00 h' },
 ]
 
 type Screen =
@@ -98,13 +95,6 @@ export default function ProgramsClient() {
             color="#60A5FA"
             onClick={() => setScreen({ type: 'run-goal' })}
           />
-          <ProgramCard
-            icon={<Zap size={22} strokeWidth={2} />}
-            label="HYROX"
-            sub="Competencia funcional — 6 días específicos"
-            color="#FF6B35"
-            onClick={() => setScreen({ type: 'week', program: 'hyrox' })}
-          />
         </div>
       </div>
     )
@@ -148,12 +138,11 @@ export default function ProgramsClient() {
   if (screen.type === 'week') {
     const { program, runGoal } = screen
 
-    const color  = program === 'gym' ? '#A78BFA' : program === 'run' ? '#60A5FA' : '#FF6B35'
-    const title  = program === 'gym' ? 'GYM' : program === 'run' ? `RUN — ${RUN_GOALS.find(g => g.value === runGoal)?.label ?? ''}` : 'HYROX'
+    const color  = program === 'gym' ? '#A78BFA' : '#60A5FA'
+    const title  = program === 'gym' ? 'GYM' : `RUN — ${RUN_GOALS.find(g => g.value === runGoal)?.label ?? ''}`
 
     const days =
-      program === 'gym'   ? GYM_PROGRAM :
-      program === 'hyrox' ? HYROX_PROGRAM :
+      program === 'gym' ? GYM_PROGRAM :
       RUN_PROGRAMS.find(p => p.goal === runGoal)?.days ?? []
 
     const [selectedVariants, setSelectedVariants] = useState<Record<number, Variant>>(
@@ -162,16 +151,8 @@ export default function ProgramsClient() {
 
     const back = () => program === 'run' ? setScreen({ type: 'run-goal' }) : setScreen({ type: 'home' })
 
-    const TYPE_COLORS: Record<string, string> = {
-      strength:   '#A78BFA',
-      cardio:     '#60A5FA',
-      simulation: '#FF6B35',
-      rest:       '#333',
-    }
-
     return (
       <div className="pt-6 pb-8">
-        {/* Header */}
         <div className="px-5 mb-5">
           <button onClick={back} className="flex items-center gap-1.5 text-[#555] mb-4 active:opacity-50">
             <ChevronLeft size={16} />
@@ -181,20 +162,17 @@ export default function ProgramsClient() {
           <p className="text-[#555] text-[12px] font-mono mt-1">PLAN SEMANAL</p>
         </div>
 
-        {/* Day list */}
         <div className="flex flex-col px-5 gap-2">
           {days.map((day, i) => {
-            const isRest = ('isRest' in day && day.isRest) || ('type' in day && day.type === 'rest')
-            const title  = 'muscle' in day ? day.muscle : 'title' in day ? day.title : ''
-            const dayColor = 'type' in day && !('muscle' in day) ? (TYPE_COLORS[day.type as string] ?? color) : color
+            const isRest = 'isRest' in day && day.isRest
+            const title  = 'muscle' in day ? day.muscle : ''
             const variant = selectedVariants[i] ?? 'A'
 
             return (
               <div key={i} className="rounded-2xl border border-[#1E1E1E] bg-[#111] overflow-hidden">
-                {/* Day header */}
                 <div className="flex items-center gap-3 px-4 pt-3.5 pb-2">
                   <div>
-                    <p className="font-mono text-[9px] font-bold tracking-[0.15em]" style={{ color: isRest ? '#333' : dayColor }}>
+                    <p className="font-mono text-[9px] font-bold tracking-[0.15em]" style={{ color: isRest ? '#333' : color }}>
                       {('dow' in day ? day.dow : '')}
                     </p>
                     <p className={`text-[13px] font-semibold leading-snug ${isRest ? 'text-[#333]' : 'text-white'}`}>
@@ -205,20 +183,18 @@ export default function ProgramsClient() {
 
                 {!isRest && (
                   <>
-                    {/* Variant pills */}
                     <div className="flex gap-2 px-4 pb-2">
                       {(['A', 'B', 'C'] as Variant[]).map(v => (
                         <VariantPill
                           key={v}
                           v={v}
                           active={variant === v}
-                          color={dayColor}
+                          color={color}
                           onClick={() => setSelectedVariants(prev => ({ ...prev, [i]: v }))}
                         />
                       ))}
                     </div>
 
-                    {/* Open detail */}
                     <button
                       onClick={() => setScreen({ type: 'day', program, runGoal, dayIndex: i, variant })}
                       className="w-full flex items-center justify-between px-4 py-3 border-t border-[#1A1A1A] active:opacity-50"
@@ -250,10 +226,6 @@ export default function ProgramsClient() {
       const day  = prog?.days[dayIndex]
       if (!day) return null
       return <RunDayDetail day={day} variant={variant} goalLabel={RUN_GOALS.find(g => g.value === runGoal)?.label ?? ''} onBack={back} />
-    }
-    if (program === 'hyrox') {
-      const day = HYROX_PROGRAM[dayIndex]
-      return <HyroxDayDetail day={day} onBack={back} />
     }
   }
 

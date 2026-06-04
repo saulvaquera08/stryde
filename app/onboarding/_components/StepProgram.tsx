@@ -1,115 +1,106 @@
 'use client'
 
-import { Dumbbell, TrendingUp, Zap, ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import type { OnboardingData, ProgramType } from '../types'
 
 const PROGRAMS: {
-  type:  ProgramType
-  icon:  React.ReactNode
-  label: string
-  tags:  string
-  desc:  string
-  color: string
+  type: ProgramType
+  emoji: string
+  title: string
+  subtitle: string
+  tags: string[]
 }[] = [
   {
-    type:  'gym',
-    icon:  <Dumbbell size={22} strokeWidth={2} />,
-    label: 'GYM',
-    tags:  'Fuerza · Hipertrofia · Composición',
-    desc:  'Entrena con pesas para construir músculo, ganar fuerza o cambiar tu composición corporal',
-    color: '#A78BFA',
+    type: 'gym',
+    emoji: '🏋️',
+    title: 'GYM',
+    subtitle: 'Fuerza e hipertrofia',
+    tags: ['Push · Pull · Legs', 'Upper / Lower', 'Progresión científica'],
   },
   {
-    type:  'run',
-    icon:  <TrendingUp size={22} strokeWidth={2} />,
-    label: 'RUN',
-    tags:  '5K · 10K · 15K · 21K · 42K',
-    desc:  'Prepárate para tu próxima carrera. Planes específicos por distancia',
-    color: '#60A5FA',
-  },
-  {
-    type:  'hyrox',
-    icon:  <Zap size={22} strokeWidth={2} />,
-    label: 'HYROX',
-    tags:  'Fuerza + Cardio · Competencia',
-    desc:  'Entrena para competir en HYROX. Combina fuerza funcional y running',
-    color: '#FF6B35',
+    type: 'run',
+    emoji: '🏃',
+    title: 'RUNNING',
+    subtitle: 'Carreras y resistencia',
+    tags: ['5K · 10K · 21K · 42K', 'Zonas cardíacas', 'Plan por fecha de carrera'],
   },
 ]
 
 interface Props {
-  data:     OnboardingData
-  onChange: (data: OnboardingData) => void
-  onNext:   () => void
-  onBack:   () => void
+  data: OnboardingData
+  onChange: (d: OnboardingData) => void
+  onNext: () => void
+  onBack: () => void
 }
 
 export default function StepProgram({ data, onChange, onNext, onBack }: Props) {
   const select = (type: ProgramType) => {
-    onChange({ ...data, program_type: type })
+    // Reset program-specific fields when switching
+    onChange({
+      ...data,
+      program_type: type,
+      gym_goal: '',  gym_split: '',
+      run_goal: '',  run_race_date: '',
+      current_5k_time: '', current_10k_time: '',
+      current_hm_time: '', current_marathon_time: '',
+    })
   }
-
-  const canContinue = data.program_type !== ''
 
   return (
     <div className="flex-1 flex flex-col px-6 pb-8 max-w-lg mx-auto w-full">
       <div className="flex-1">
         <h1 className="text-[2rem] font-bold text-white leading-tight mb-2">
-          ¿Cuál es tu objetivo?
+          ¿Qué tipo de atleta eres?
         </h1>
         <p className="text-[#888888] text-sm mb-8">
-          Tu plan completo se construye alrededor de esto
+          Tu plan se construirá desde cero para este objetivo
         </p>
 
-        <div className="flex flex-col gap-3">
-          {PROGRAMS.map(({ type, icon, label, tags, desc, color }) => {
+        <div className="space-y-4">
+          {PROGRAMS.map(({ type, emoji, title, subtitle, tags }) => {
             const selected = data.program_type === type
             return (
               <button
                 key={type}
                 onClick={() => select(type)}
-                className={`w-full p-5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.99] ${
-                  selected
-                    ? 'border-[color:var(--c)] bg-[color:var(--bg)]'
-                    : 'border-[#222] bg-[#141414]'
-                }`}
-                style={{
-                  '--c':  color,
-                  '--bg': `${color}12`,
-                } as React.CSSProperties}
+                className={`
+                  w-full p-5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.99]
+                  ${selected
+                    ? 'bg-[#C8FF00]/[0.06] border-[#C8FF00]'
+                    : 'bg-[#141414] border-[#222222] hover:border-[#3a3a3a]'
+                  }
+                `}
               >
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `${color}20`, color: selected ? color : '#666' }}
-                  >
-                    {icon}
+                <div className="flex items-center gap-4 mb-3">
+                  <span className="text-3xl">{emoji}</span>
+                  <div>
+                    <div className={`text-xl font-bold tracking-tight ${selected ? 'text-[#C8FF00]' : 'text-white'}`}>
+                      {title}
+                    </div>
+                    <div className="text-[#888888] text-sm">{subtitle}</div>
                   </div>
 
-                  {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span
-                        className="font-mono text-[11px] font-bold tracking-[0.15em]"
-                        style={{ color: selected ? color : '#888' }}
-                      >
-                        {label}
-                      </span>
-                      {selected && (
-                        <div
-                          className="w-4 h-4 rounded-full flex items-center justify-center"
-                          style={{ background: color }}
-                        >
-                          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path d="M1.5 4L3.5 6L7 2" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <p className="font-mono text-[10px] text-[#555] tracking-[0.08em] mb-1.5">{tags}</p>
-                    <p className="text-[#888] text-[12px] leading-snug">{desc}</p>
+                  {/* Radio indicator */}
+                  <div className={`
+                    ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+                    ${selected ? 'border-[#C8FF00]' : 'border-[#444444]'}
+                  `}>
+                    {selected && <div className="w-2.5 h-2.5 rounded-full bg-[#C8FF00]" />}
                   </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {tags.map(tag => (
+                    <span
+                      key={tag}
+                      className={`
+                        text-[11px] px-2 py-1 rounded-md font-medium
+                        ${selected ? 'bg-[#C8FF00]/10 text-[#C8FF00]' : 'bg-[#1E1E1E] text-[#555555]'}
+                      `}
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </button>
             )
@@ -120,13 +111,13 @@ export default function StepProgram({ data, onChange, onNext, onBack }: Props) {
       <div className="flex gap-3 mt-8">
         <button
           onClick={onBack}
-          className="flex items-center justify-center w-14 py-4 rounded-xl border border-[#222] text-[#888] active:scale-95"
+          className="flex items-center justify-center w-14 py-4 rounded-xl border border-[#222222] text-[#888888] hover:border-[#444444] transition-colors active:scale-95"
         >
           <ChevronLeft size={18} />
         </button>
         <button
           onClick={onNext}
-          disabled={!canContinue}
+          disabled={!data.program_type}
           className="flex-1 bg-[#C8FF00] text-black font-bold py-4 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
         >
           Continuar →

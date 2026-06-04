@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { generatePlan } from '../lib/planGenerator'
+import { generatePlan, validatePlan } from '../lib/planGenerator'
 
 const SUPABASE_URL = 'https://htmzmawdcgasddkdgsqy.supabase.co'
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -10,28 +10,49 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 const USER_ID = 'aa9c7a77-3097-493f-bba7-e08ae934ada4'
 
+const GYM_PROFILE = {
+  level:         'intermediate',
+  training_days: ['monday', 'tuesday', 'wednesday', 'friday', 'saturday'],
+  equipment:     'full_gym',
+  goals:         [{ type: 'strength' }],
+  program_type:  'gym' as const,
+  gym_goal:      'strength',
+  gym_split:     'ppl' as const,
+}
+
+const RUN_PROFILE = {
+  level:         'intermediate',
+  training_days: ['monday', 'tuesday', 'thursday', 'friday', 'sunday'],
+  equipment:     'full_gym',
+  goals:         [{ type: 'half_marathon', race_date: '2026-09-05' }],
+  program_type:  'run' as const,
+  run_distance:  'half_marathon',
+}
+
+const ACTIVE_PROFILE = process.argv.includes('--gym') ? GYM_PROFILE : RUN_PROFILE
+
 async function main() {
-  const profile = {
-    level:         'intermediate',
-    training_days: ['monday', 'tuesday', 'thursday', 'friday', 'sunday'],
-    equipment:     'full_gym',
-    goals:         [{ type: 'hyrox', race_date: '2026-09-05' }],
+  const mode = process.argv.includes('--gym') ? 'GYM' : 'RUN'
+  console.log(`\n═══ ${mode} PLAN ═══\n`)
+
+  const { plan: planData, workouts: workoutsData } = generatePlan(USER_ID, ACTIVE_PROFILE)
+
+  console.log(`Generated: ${planData.total_weeks} weeks · ${workoutsData.length} workouts`)
+  console.log(`Start: ${planData.start_date}  End: ${planData.end_date}`)
+
+  try {
+    validatePlan(workoutsData, ACTIVE_PROFILE.training_days.length)
+    console.log(`✓ Validation passed — no issues`)
+  } catch (e: any) {
+    console.log(`\n⚠ Validation error: ${e.message}`)
   }
 
-  const { plan: planData, workouts: workoutsData } = generatePlan(USER_ID, profile)
-
-  console.log(`\nGenerated plan: ${planData.total_weeks} weeks · ${workoutsData.length} workouts`)
-  console.log(`Start: ${planData.start_date}  End: ${planData.end_date}\n`)
-
-  // Preview first 3 weeks
-  console.log('═══ FIRST 3 WEEKS ═══')
+  console.log('\n═══ FIRST 3 WEEKS ═══')
   const first3 = workoutsData.filter(w => (w.week_number ?? 0) <= 3 && !w.is_rest_day)
   for (const w of first3) {
-    const block = (w.blocks as any[])?.[w.day_type === 'run_day' ? 1 : 0]
-    const warmup = w.day_type === 'run_day' ? (w.blocks as any[])?.[0]?.label : null
+    const block = (w.blocks as any[])?.[0]
     console.log(
-      `  W${w.week_number} ${w.scheduled_date}  [${w.day_type.padEnd(20)}]  ${block?.label ?? ''}`
-      + (warmup ? `  (+ ${warmup})` : '')
+      `  W${w.week_number} ${w.scheduled_date}  [${w.day_type!.padEnd(24)}]  ${block?.label ?? ''}`
     )
   }
   console.log('')
@@ -58,15 +79,6 @@ async function main() {
 
   console.log(`✓ Plan inserted  (id: ${plan.id})`)
   console.log(`✓ ${workoutsData.length} workouts inserted\n`)
-
-  // Show HX rotation in first 10 weeks
-  console.log('═══ HYROX ROTATION (weeks 1-10) ═══')
-  const hxWorkouts = workoutsData.filter(w => w.day_type === 'hyrox_day' && (w.week_number ?? 0) <= 10)
-  for (const w of hxWorkouts) {
-    const block = (w.blocks as any[])?.[0]
-    console.log(`  W${w.week_number}  ${w.scheduled_date}  ${block?.label ?? ''}`)
-  }
-  console.log('')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

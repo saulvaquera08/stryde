@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { Clock, Zap } from 'lucide-react'
+import { Clock, Activity } from 'lucide-react'
 import { getDayTypeLabel, getDayTypeColor } from '@/lib/workout-utils'
 import type { WorkoutBlock } from '@/lib/supabase/types'
 import WorkoutClient from './WorkoutClient'
@@ -12,7 +12,7 @@ function BlockSection({ block }: { block: WorkoutBlock }) {
     strength:  'FUERZA',
     power:     'POTENCIA',
     cardio:    'CARDIO',
-    hyrox:     'ENTRENAMIENTO',
+    main:      'ENTRENAMIENTO',
     hiit:      'HIIT',
     accessory: 'ACCESORIO',
     mobility:  'MOVILIDAD',
@@ -148,7 +148,7 @@ export default async function WorkoutDetailPage({
           {workout.duration_minutes} min
         </span>
         <span className="flex items-center gap-1 text-xs text-[#888888] bg-[#1A1A1A] px-3 py-1 rounded-full capitalize">
-          <Zap size={11} />
+          <Activity size={11} />
           {workout.intensity}
         </span>
         {completed && (

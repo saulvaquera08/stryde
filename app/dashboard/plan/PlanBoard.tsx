@@ -7,7 +7,7 @@ import {
   MouseSensor, TouchSensor, useSensor, useSensors, pointerWithin,
 } from '@dnd-kit/core'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { ChevronLeft, ChevronRight, Plus, Check, TrendingUp, Dumbbell, Zap, Activity } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, TrendingUp, Dumbbell, Activity } from 'lucide-react'
 import { moveWorkout } from '../settings/actions'
 import { getDayTypeColor } from '@/lib/workout-utils'
 import LogActivityModal from './LogActivityModal'
@@ -45,12 +45,19 @@ const DOW_ES   = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado
 const DOW_SHORT = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 
 const TYPE_LABEL: Record<string, string> = {
-  run_day:              'CORRER',
-  strength_lower_day:   'FUERZA',
-  strength_upper_day:   'FUERZA',
-  hyrox_day:            'HYROX',
-  race_day:             'CARRERA',
-  recovery_day:         'RECUPERACIÓN',
+  strength_push_day:      'PUSH',
+  strength_pull_day:      'PULL',
+  strength_legs_day:      'LEGS',
+  strength_upper_day:     'UPPER',
+  strength_lower_day:     'LOWER',
+  strength_full_body_day: 'FULL BODY',
+  run_easy_day:           'EASY RUN',
+  run_tempo_day:          'TEMPO',
+  run_intervals_day:      'INTERVALOS',
+  run_long_day:           'LONG RUN',
+  run_fartlek_day:        'FARTLEK',
+  race_day:               'CARRERA',
+  recovery_day:           'RECUPERACIÓN',
 }
 
 function mainBlock(blocks: any[]): any {
@@ -58,9 +65,8 @@ function mainBlock(blocks: any[]): any {
 }
 
 function WorkoutIcon({ dayType, size = 18 }: { dayType: string; size?: number }) {
-  if (dayType === 'hyrox_day' || dayType === 'race_day') return <Zap size={size} strokeWidth={2} />
-  if (dayType === 'run_day')                             return <TrendingUp size={size} strokeWidth={2} />
-  if (dayType.includes('strength'))                      return <Dumbbell size={size} strokeWidth={2} />
+  if (dayType.startsWith('run_') || dayType === 'race_day') return <TrendingUp size={size} strokeWidth={2} />
+  if (dayType.startsWith('strength_'))                       return <Dumbbell size={size} strokeWidth={2} />
   return <Activity size={size} strokeWidth={2} />
 }
 

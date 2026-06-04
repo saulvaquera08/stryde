@@ -1,54 +1,53 @@
-export type WorkoutCategory = 'HYROX' | 'RUN' | 'LIFT' | 'HYBRID' | 'TRAIN'
+export type WorkoutCategory = 'RUN' | 'GYM' | 'TRAIN'
 
-// ─── New strict day-type helpers ──────────────────────────────────────────────
+// ─── Day-type helpers ────────────────────────────────────────────────────────
 
 export function getDayTypeLabel(dayType: string): string {
   switch (dayType) {
-    case 'strength_lower_day': return 'FUERZA LOWER'
-    case 'strength_upper_day': return 'FUERZA UPPER'
-    case 'run_day':            return 'RUN'
-    case 'hyrox_day':          return 'HYROX'
-    case 'race_day':           return 'RACE DAY'
-    case 'rest_day':           return 'DESCANSO'
-    case 'recovery_day':       return 'RECUPERACIÓN'
-    default:                   return dayType.toUpperCase().replace(/_/g, ' ')
+    case 'strength_push_day':      return 'PUSH'
+    case 'strength_pull_day':      return 'PULL'
+    case 'strength_legs_day':      return 'LEGS'
+    case 'strength_upper_day':     return 'UPPER'
+    case 'strength_lower_day':     return 'LOWER'
+    case 'strength_full_body_day': return 'FULL BODY'
+    case 'run_easy_day':           return 'EASY RUN'
+    case 'run_tempo_day':          return 'TEMPO'
+    case 'run_intervals_day':      return 'INTERVALS'
+    case 'run_long_day':           return 'LONG RUN'
+    case 'run_fartlek_day':        return 'FARTLEK'
+    case 'race_day':               return 'RACE DAY'
+    case 'rest_day':               return 'DESCANSO'
+    case 'recovery_day':           return 'RECUPERACIÓN'
+    default:                       return dayType.toUpperCase().replace(/_/g, ' ')
   }
 }
 
 export function getDayTypeColor(dayType: string): string {
+  if (dayType.startsWith('strength_')) return '#A78BFA'
+  if (dayType.startsWith('run_'))      return '#60A5FA'
   switch (dayType) {
-    case 'strength_lower_day':
-    case 'strength_upper_day': return '#A78BFA'
-    case 'run_day':            return '#C8FF00'
-    case 'hyrox_day':
-    case 'race_day':           return '#FF6B35'
-    case 'recovery_day':       return '#888888'
-    default:                   return '#444444'
+    case 'race_day':     return '#C8FF00'
+    case 'recovery_day': return '#888888'
+    default:             return '#444444'
   }
 }
 
-// ─── Legacy category helpers (kept for plan/workout-detail pages) ─────────────
+// ─── Category helpers ────────────────────────────────────────────────────────
 
 export function getWorkoutCategory(dayType: string): WorkoutCategory {
   const t = dayType.toLowerCase()
-  // New strict day types
-  if (t === 'hyrox_day' || t === 'race_day')                      return 'HYROX'
-  if (t === 'run_day')                                             return 'RUN'
-  if (t === 'strength_lower_day' || t === 'strength_upper_day')   return 'LIFT'
-  // Legacy fallback
-  if (t.includes('hyrox') || t.includes('simulation'))            return 'HYROX'
-  if (t.includes('run') || t.includes('z2') || t.includes('tempo') || t.includes('interval')) return 'RUN'
-  if (t.includes('strength') || t.includes('upper') || t.includes('lower') || t.includes('fuerza')) return 'LIFT'
+  if (t.startsWith('run_') || t === 'race_day')  return 'RUN'
+  if (t.startsWith('strength_'))                  return 'GYM'
+  if (t.includes('run') || t.includes('tempo') || t.includes('interval')) return 'RUN'
+  if (t.includes('strength') || t.includes('upper') || t.includes('lower') || t.includes('push') || t.includes('pull') || t.includes('legs')) return 'GYM'
   return 'TRAIN'
 }
 
 export function getCategoryColor(category: WorkoutCategory): string {
   switch (category) {
-    case 'HYROX':  return '#FF6B35'
-    case 'RUN':    return '#C8FF00'
-    case 'LIFT':   return '#A78BFA'
-    case 'HYBRID': return '#38BDF8'
-    default:       return '#888888'
+    case 'RUN':  return '#60A5FA'
+    case 'GYM':  return '#A78BFA'
+    default:     return '#888888'
   }
 }
 

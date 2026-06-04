@@ -130,66 +130,9 @@ export const RUN_PROGRAMS: RunProgram[] = [
     ],
   },
 
-  // ── 15K ───────────────────────────────────────────────────────────────────
+  // ── MEDIA MARATÓN ─────────────────────────────────────────────────────────
   {
-    goal: '15k',
-    label: '15K',
-    days: [
-      {
-        dow: 'LUNES', isRest: false,
-        sessions: [
-          { variant: 'A', type: 'EASY',        description: 'Carrera de recuperación suave',      distanceKm: 7, durationMin: 46, pacePerKm: '6:34', intensity: 'Baja (Z2)',         notes: 'Ritmo conversación' },
-          { variant: 'B', type: 'EASY LARGA',  description: 'Carrera larga para base aeróbica',   distanceKm: 9, durationMin: 59, pacePerKm: '6:36', intensity: 'Baja (Z2)',         notes: 'Acumulación de volumen' },
-          { variant: 'C', type: 'FARTLEK LARGO',description:'Variaciones de ritmo extensas',      distanceKm: 8, durationMin: 48, pacePerKm: '6:00', intensity: 'Media-Alta (Z3-Z4)',notes: 'Trabajo aeróbico-anaeróbico' },
-        ],
-      },
-      {
-        dow: 'MARTES', isRest: false,
-        sessions: [
-          { variant: 'A', type: 'SERIES 800m',  description: '8x800m @ 15K pace + 400m recovery',  distanceKm: 6.4, durationMin: 38, pacePerKm: '5:56', intensity: 'Muy Alta (Z5)', notes: 'Potencia aeróbica' },
-          { variant: 'B', type: 'SERIES 1000m', description: '6x1000m @ 15K pace + 500m recovery', distanceKm: 6.6, durationMin: 40, pacePerKm: '6:06', intensity: 'Muy Alta (Z5)', notes: 'Resistencia anaeróbica' },
-          { variant: 'C', type: 'SERIES 1200m', description: '5x1200m @ 15K pace + 600m recovery', distanceKm: 7,   durationMin: 42, pacePerKm: '6:00', intensity: 'Muy Alta (Z5)', notes: 'Capacidad de esfuerzo' },
-        ],
-      },
-      {
-        dow: 'MIÉRCOLES', isRest: false,
-        sessions: [
-          { variant: 'A', type: 'EASY',         description: 'Carrera de recuperación', distanceKm: 6, durationMin: 40, pacePerKm: '6:40', intensity: 'Baja (Z2)', notes: 'Activa recuperación' },
-          { variant: 'B', type: 'EASY MODERADA',description: 'Carrera moderada de recup',distanceKm: 7,durationMin: 47, pacePerKm: '6:43', intensity: 'Baja (Z2)', notes: 'Base aeróbica' },
-          { variant: 'C', type: 'EASY LARGA',   description: 'Carrera larga suave',     distanceKm: 8, durationMin: 53, pacePerKm: '6:37', intensity: 'Baja (Z2)', notes: 'Volumen sin esfuerzo' },
-        ],
-      },
-      {
-        dow: 'JUEVES', isRest: false,
-        sessions: [
-          { variant: 'A', type: 'TEMPO LARGO',       description: 'Ritmo umbral 30-35 minutos',               distanceKm: 8,   durationMin: 48, pacePerKm: '6:00', intensity: 'Alta (Z4)',         notes: 'Lactato umbral extendido' },
-          { variant: 'B', type: 'TEMPO PROGRESIVO',  description: '10min easy + 25min tempo + 5min easy',     distanceKm: 8,   durationMin: 49, pacePerKm: '6:08', intensity: 'Media-Alta (Z3-Z4)',notes: 'Adaptación progresiva' },
-          { variant: 'C', type: 'TEMPO + REPETIDAS', description: '20min tempo + 3x3min rápido',              distanceKm: 8.5, durationMin: 50, pacePerKm: '5:53', intensity: 'Alta-Muy Alta (Z4-Z5)',notes:'Trabajo combinado' },
-        ],
-      },
-      {
-        dow: 'VIERNES', isRest: false,
-        sessions: [
-          { variant: 'A', type: 'EASY',          description: 'Carrera fácil pre-carrera',  distanceKm: 5,   durationMin: 34, pacePerKm: '6:48', intensity: 'Baja (Z2)',     notes: 'Piernas frescas' },
-          { variant: 'B', type: 'EASY + STRIDES',description: '5km easy + 8x100m strides',  distanceKm: 5.8, durationMin: 36, pacePerKm: '6:12', intensity: 'Baja (Z2)',     notes: 'Activación neuromuscular' },
-          { variant: 'C', type: 'EASY MODERADA', description: 'Carrera ligera',             distanceKm: 4,   durationMin: 27, pacePerKm: '6:45', intensity: 'Muy Baja (Z1)',notes: 'Regeneración' },
-        ],
-      },
-      {
-        dow: 'SÁBADO', isRest: false,
-        sessions: [
-          { variant: 'A', type: '15K CARRERA',    description: 'Carrera de 15K a ritmo de competencia', distanceKm: 15, durationMin: 90, pacePerKm: '6:00', intensity: 'Máxima (Z5)',          notes: 'CARRERA PRINCIPAL' },
-          { variant: 'B', type: '15K PROGRESIVO', description: 'Inicio suave, termina rápido',           distanceKm: 15, durationMin: 93, pacePerKm: '6:12', intensity: 'Media-Muy Alta (Z4-Z5)',notes: 'Finalización fuerte' },
-          { variant: 'C', type: '15K TEMPO LARGO',description: '15K a ritmo de tempo',                  distanceKm: 15, durationMin: 97, pacePerKm: '6:28', intensity: 'Muy Alta (Z5)',         notes: 'Esfuerzo sostenido' },
-        ],
-      },
-      restDay('DOMINGO'),
-    ],
-  },
-
-  // ── 21K ───────────────────────────────────────────────────────────────────
-  {
-    goal: '21k',
+    goal: 'half_marathon',
     label: 'Media Maratón',
     days: [
       {
@@ -246,7 +189,7 @@ export const RUN_PROGRAMS: RunProgram[] = [
 
   // ── 42K ───────────────────────────────────────────────────────────────────
   {
-    goal: '42k',
+    goal: 'marathon',
     label: 'Maratón',
     days: [
       {

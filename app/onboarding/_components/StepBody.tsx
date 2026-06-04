@@ -33,9 +33,8 @@ function Field({ label, value, onChange, placeholder, unit }: FieldProps) {
 }
 
 const SUBTITLES: Record<string, string> = {
-  gym:   'Calculamos cargas relativas y progresión de peso',
-  run:   'Estimamos tu VO₂max y zonas de frecuencia cardíaca',
-  hyrox: 'Optimizamos la combinación de carga y ritmo de carrera',
+  gym: 'Calculamos cargas relativas y progresión de peso',
+  run: 'Estimamos tu VO₂max y zonas de frecuencia cardíaca',
 }
 
 interface Props {

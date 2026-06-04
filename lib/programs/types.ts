@@ -1,5 +1,5 @@
-export type ProgramType = 'gym' | 'run' | 'hyrox'
-export type RunGoal    = '5k' | '10k' | '15k' | '21k' | '42k'
+export type ProgramType = 'gym' | 'run'
+export type RunGoal    = '5k' | '10k' | 'half_marathon' | 'marathon'
 export type Variant    = 'A' | 'B' | 'C'
 
 export interface GymExercise {
@@ -46,34 +46,4 @@ export interface RunProgram {
   goal:    RunGoal
   label:   string
   days:    RunDay[]
-}
-
-// ── HYROX ─────────────────────────────────────────────────────────────────────
-
-export interface HyroxExercise {
-  name:   string
-  type:   string
-  volume: string
-  weight: string
-  rest:   string
-  notes:  string
-}
-
-export interface HyroxSegment {
-  time:     string
-  duration: string
-  segment:  string
-  station:  string
-  volume:   string
-  notes:    string
-}
-
-export type HyroxBlock = HyroxExercise | HyroxSegment
-
-export interface HyroxDay {
-  dow:         string
-  type:        'strength' | 'cardio' | 'simulation' | 'rest'
-  title:       string
-  description: string
-  blocks:      HyroxBlock[]
 }

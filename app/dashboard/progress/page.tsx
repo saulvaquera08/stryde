@@ -124,14 +124,12 @@ export default async function ProgressPage() {
   }
 
   const ACTIVITY_TYPE_TO_DAY_TYPE: Record<string, string> = {
-    run:      'run_day',
-    strength: 'strength_lower_day',
-    hyrox:    'hyrox_day',
+    run:      'run_easy_day',
+    strength: 'strength_full_body_day',
   }
   const ACTIVITY_TYPE_LABEL: Record<string, string> = {
     run:      'Carrera manual',
     strength: 'Gym manual',
-    hyrox:    'HYROX manual',
     other:    'Actividad manual',
   }
 
