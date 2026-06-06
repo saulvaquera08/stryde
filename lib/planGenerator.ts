@@ -69,6 +69,8 @@ export interface PlanProfile {
 
   run_distance?:     string
   run_weekly_km?:    string
+
+  secondary_program_days?: number   // 0 = pure, 1-3 = mix & match
 }
 
 export interface GeneratedPlan {
@@ -880,6 +882,243 @@ function ensureNoConsecutiveHardDays(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PARTE 4B — MIXED SCHEDULE (Mix & Match)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+/**
+ * Maps GymPhase → RunPhase for secondary run workouts when primary is gym.
+ * familiarization/accumulation → base, intensification → build, deload → taper
+ */
+function gymPhaseToRunPhase(gymPhase: GymPhase): RunPhase {
+  switch (gymPhase) {
+    case 'familiarization': return 'base'
+    case 'accumulation':    return 'base'
+    case 'intensification': return 'build'
+    case 'deload':          return 'taper'
+  }
+}
+
+/**
+ * Maps RunPhase → GymPhase for secondary gym workouts when primary is run.
+ * base → familiarization, build → accumulation, peak → intensification, taper/recovery → deload
+ */
+function runPhaseToGymPhase(runPhase: RunPhase): GymPhase {
+  switch (runPhase) {
+    case 'base':     return 'familiarization'
+    case 'build':    return 'accumulation'
+    case 'peak':     return 'intensification'
+    case 'taper':    return 'deload'
+    case 'recovery': return 'deload'
+  }
+}
+
+interface ScheduleSlot {
+  dayOfWeek:    number
+  dayKey:       string
+  slotProgram:  'gym' | 'run'
+  isSecondary:  boolean
+  slotIndex:    number
+  // Exactly one of these is set depending on slotProgram
+  gymSlot?:     { dayType: DayType; getVariant: (week: number) => GymVariant; duration: number }
+  runSlotKey?:  RunSlotKey
+}
+
+/**
+ * Determines if a slot has high intensity (for cross-program conflict detection).
+ */
+function isHighIntensitySlot(
+  slotProgram: 'gym' | 'run',
+  gymSlotDayType?: DayType,
+  runSlotKey?: RunSlotKey,
+): boolean {
+  if (slotProgram === 'run') {
+    return runSlotKey === 'INTERVALS'
+  }
+  // GYM: LEGS and PUSH have heavy compounds → high in accumulation/intensification
+  return gymSlotDayType === 'strength_legs_day' || gymSlotDayType === 'strength_push_day'
+}
+
+/**
+ * Picks the best days for secondary workouts, maximizing distance from
+ * high-intensity primary days (circular week distance).
+ */
+function pickBestSecondaryDays(
+  availDays: string[],
+  highIntensityDayNums: number[],
+  count: number,
+): string[] {
+  const scored = availDays.map(day => {
+    const dayNum = DAY_TO_NUM[day]
+    const minDist = highIntensityDayNums.length > 0
+      ? Math.min(...highIntensityDayNums.map(h => {
+          const diff = Math.abs(dayNum - h)
+          return Math.min(diff, 7 - diff) // circular week
+        }))
+      : 7
+    return { day, score: minDist }
+  })
+  return scored
+    .sort((a, b) => b.score - a.score) // mayor distancia primero
+    .slice(0, count)
+    .map(s => s.day)
+    .sort((a, b) => (DAY_TO_NUM[a] ?? 0) - (DAY_TO_NUM[b] ?? 0))
+}
+
+/**
+ * Returns secondary slot keys for the opposite program.
+ * Gym primary → run secondary (easy runs + maybe tempo)
+ * Run primary → gym secondary (full body)
+ */
+function getSecondaryRunSlots(count: number): RunSlotKey[] {
+  // 1 day: easy, 2 days: easy + tempo, 3 days: easy + tempo + easy
+  const pool: RunSlotKey[] = ['EASY', 'TEMPO', 'EASY']
+  return pool.slice(0, count)
+}
+
+function getSecondaryGymSchedule(count: number): Array<{ dayType: DayType; getVariant: (week: number) => GymVariant; duration: number }> {
+  // Always full body, rotating A/B/C variants
+  return Array.from({ length: count }, (_, i) => ({
+    dayType: 'strength_full_body_day' as DayType,
+    getVariant: () => FB_VARIANTS[i % FB_VARIANTS.length],
+    duration: FB_VARIANTS[i % FB_VARIANTS.length].duration,
+  }))
+}
+
+/**
+ * Auto-fix consecutive high-intensity days across any program mix.
+ * If two adjacent days are both high, degrade the secondary one (or the second if both primary).
+ */
+function fixConsecutiveHighIntensity(slots: ScheduleSlot[]): ScheduleSlot[] {
+  for (let i = 0; i < slots.length - 1; i++) {
+    const curr = slots[i]
+    const next = slots[i + 1]
+    const gap  = next.dayOfWeek - curr.dayOfWeek
+    if (gap !== 1) continue
+
+    const currHigh = isHighIntensitySlot(curr.slotProgram, curr.gymSlot?.dayType, curr.runSlotKey)
+    const nextHigh = isHighIntensitySlot(next.slotProgram, next.gymSlot?.dayType, next.runSlotKey)
+    if (!currHigh || !nextHigh) continue
+
+    // Prefer degrading the secondary one
+    const target = next.isSecondary ? i + 1 : curr.isSecondary ? i : i + 1
+    const s = slots[target]
+    if (s.slotProgram === 'run') {
+      slots[target] = { ...s, runSlotKey: 'EASY' }
+    } else if (s.gymSlot) {
+      // Degrade to full body
+      slots[target] = {
+        ...s,
+        gymSlot: {
+          dayType: 'strength_full_body_day',
+          getVariant: () => FB_VARIANTS[s.slotIndex % FB_VARIANTS.length],
+          duration: FB_VARIANTS[s.slotIndex % FB_VARIANTS.length].duration,
+        },
+      }
+    }
+  }
+  return slots
+}
+
+/**
+ * Builds a unified weekly schedule that handles both pure and mixed programs.
+ * When secondary_program_days === 0, returns only primary slots (identical to before).
+ */
+function buildMixedSchedule(profile: PlanProfile): ScheduleSlot[] {
+  const programType    = detectProgramType(profile)
+  const gymSplit       = programType === 'gym' ? detectGymSplit(profile) : null
+  const secondaryCount = Math.min(profile.secondary_program_days ?? 0, 3)
+
+  const primaryDays = [...profile.training_days]
+    .sort((a, b) => (DAY_TO_NUM[a] ?? 0) - (DAY_TO_NUM[b] ?? 0))
+  const nDays = Math.min(Math.max(primaryDays.length, 3), 6)
+
+  // ── 1. Build primary slots ────────────────────────────────────────────────
+  const primarySlots: ScheduleSlot[] = []
+
+  if (programType === 'gym') {
+    const gymSchedule = getGymSchedule(gymSplit!, nDays)
+    for (let i = 0; i < Math.min(gymSchedule.length, primaryDays.length); i++) {
+      primarySlots.push({
+        dayOfWeek:   DAY_TO_NUM[primaryDays[i]],
+        dayKey:      primaryDays[i],
+        slotProgram: 'gym',
+        isSecondary: false,
+        slotIndex:   i,
+        gymSlot:     gymSchedule[i],
+      })
+    }
+  } else {
+    const runSchedule = getRunSchedule(nDays)
+    const safeSlots   = ensureNoConsecutiveHardDays(primaryDays, runSchedule)
+    for (let i = 0; i < Math.min(safeSlots.length, primaryDays.length); i++) {
+      primarySlots.push({
+        dayOfWeek:   DAY_TO_NUM[primaryDays[i]],
+        dayKey:      primaryDays[i],
+        slotProgram: 'run',
+        isSecondary: false,
+        slotIndex:   i,
+        runSlotKey:  safeSlots[i],
+      })
+    }
+  }
+
+  if (secondaryCount === 0) return primarySlots
+
+  // ── 2. Clamp: total active days never exceed 6 ────────────────────────────
+  const effectiveSecondary = Math.min(secondaryCount, Math.max(0, 6 - primaryDays.length))
+  if (effectiveSecondary === 0) return primarySlots
+
+  // ── 3. Pick secondary days from unused weekdays ───────────────────────────
+  const usedDays = new Set(primaryDays)
+  const availDays = ALL_DAYS.filter(d => !usedDays.has(d))
+
+  const highIntensityPrimaryDays = primarySlots
+    .filter(s => isHighIntensitySlot(s.slotProgram, s.gymSlot?.dayType, s.runSlotKey))
+    .map(s => s.dayOfWeek)
+
+  const secondaryDays = pickBestSecondaryDays(availDays, highIntensityPrimaryDays, effectiveSecondary)
+
+  // ── 4. Assign secondary slots ─────────────────────────────────────────────
+  const secondarySlots: ScheduleSlot[] = []
+  const secondaryProgram: 'gym' | 'run' = programType === 'gym' ? 'run' : 'gym'
+
+  if (secondaryProgram === 'run') {
+    const runKeys = getSecondaryRunSlots(effectiveSecondary)
+    for (let i = 0; i < secondaryDays.length; i++) {
+      secondarySlots.push({
+        dayOfWeek:   DAY_TO_NUM[secondaryDays[i]],
+        dayKey:      secondaryDays[i],
+        slotProgram: 'run',
+        isSecondary: true,
+        slotIndex:   i,
+        runSlotKey:  runKeys[i],
+      })
+    }
+  } else {
+    const gymSecondary = getSecondaryGymSchedule(effectiveSecondary)
+    for (let i = 0; i < secondaryDays.length; i++) {
+      secondarySlots.push({
+        dayOfWeek:   DAY_TO_NUM[secondaryDays[i]],
+        dayKey:      secondaryDays[i],
+        slotProgram: 'gym',
+        isSecondary: true,
+        slotIndex:   i,
+        gymSlot:     gymSecondary[i],
+      })
+    }
+  }
+
+  // ── 5. Merge and sort by day of week ──────────────────────────────────────
+  const allSlots = [...primarySlots, ...secondarySlots]
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+
+  // ── 6. Auto-fix consecutive high intensity ────────────────────────────────
+  return fixConsecutiveHighIntensity(allSlots)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // PARTE 5 — calcTotalWeeks
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -920,9 +1159,11 @@ export function calcTotalWeeks(goals: PlanProfile['goals'], programType?: string
 export function validatePlan(
   workouts: Omit<WorkoutInsert, 'plan_id'>[],
   trainingDaysPerWeek: number,
+  totalActiveDays?: number,
 ): void {
-  if (trainingDaysPerWeek >= 7) {
-    throw new Error('Máximo 6 días de entrenamiento (necesitas al menos 1 día de descanso)')
+  const effectiveDays = totalActiveDays ?? trainingDaysPerWeek
+  if (effectiveDays >= 7) {
+    throw new Error('El total de días activos no puede ser 7 — necesitas al menos 1 día de descanso')
   }
 
   const byWeek = new Map<number, Omit<WorkoutInsert, 'plan_id'>[]>()
@@ -967,16 +1208,14 @@ export function validatePlan(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function generatePlan(userId: string, profile: PlanProfile): GeneratedPlan {
-  const programType = detectProgramType(profile)
-  const startDate   = getPlanStartMonday()
-  const totalWeeks  = calcTotalWeeks(profile.goals, programType)
-  const endDate     = addDays(startDate, totalWeeks * 7 - 1)
-  const primary     = getPrimaryGoal(profile.goals)
-  const gymSplit    = programType === 'gym' ? detectGymSplit(profile) : null
-
-  const sortedDays = [...profile.training_days]
-    .sort((a, b) => (DAY_TO_NUM[a] ?? 0) - (DAY_TO_NUM[b] ?? 0))
-  const nDays = Math.min(Math.max(sortedDays.length, 3), 6)
+  const programType    = detectProgramType(profile)
+  const startDate      = getPlanStartMonday()
+  const totalWeeks     = calcTotalWeeks(profile.goals, programType)
+  const endDate        = addDays(startDate, totalWeeks * 7 - 1)
+  const primary        = getPrimaryGoal(profile.goals)
+  const gymSplit       = programType === 'gym' ? detectGymSplit(profile) : null
+  const secondaryCount = profile.secondary_program_days ?? 0
+  const totalActiveDays = profile.training_days.length + Math.min(secondaryCount, Math.max(0, 6 - profile.training_days.length))
 
   const phaseMap: Record<number, TrainingPhase> = {}
   for (let w = 1; w <= totalWeeks; w++) {
@@ -991,89 +1230,115 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
     end_date:    toDateStr(endDate),
     total_weeks: totalWeeks,
     structure: {
-      program_type:   programType,
-      gym_split:      gymSplit,
-      available_days: nDays,
-      level:          profile.level,
-      equipment:      profile.equipment,
-      goals:          profile.goals.map(g => g.type),
-      primary_goal:   primary,
-      training_days:  profile.training_days,
-      phase_map:      phaseMap,
-      generated_at:   new Date().toISOString(),
+      program_type:           programType,
+      gym_split:              gymSplit,
+      secondary_program_days: secondaryCount,
+      is_mixed:               secondaryCount > 0,
+      available_days:         profile.training_days.length,
+      total_active_days:      totalActiveDays,
+      level:                  profile.level,
+      equipment:              profile.equipment,
+      goals:                  profile.goals.map(g => g.type),
+      primary_goal:           primary,
+      training_days:          profile.training_days,
+      phase_map:              phaseMap,
+      generated_at:           new Date().toISOString(),
     },
   }
 
   const workouts: Omit<WorkoutInsert, 'plan_id'>[] = []
+  const schedule = buildMixedSchedule(profile)
+  const runGoal  = (primary as RunGoalType) || '5k'
 
-  // ── GYM plan ─────────────────────────────────────────────────────────────
-  if (programType === 'gym') {
-    const schedule = getGymSchedule(gymSplit!, nDays)
+  // ── Unified workout loop ─────────────────────────────────────────────────
+  for (let week = 1; week <= totalWeeks; week++) {
+    const weekStart = addDays(startDate, (week - 1) * 7)
+    const gymPhase  = phaseMap[week] as GymPhase
+    const runPhase  = phaseMap[week] as RunPhase
 
-    for (let week = 1; week <= totalWeeks; week++) {
-      const weekStart = addDays(startDate, (week - 1) * 7)
-      const phase     = phaseMap[week] as GymPhase
+    for (const slot of schedule) {
+      const workoutDate = addDays(weekStart, slot.dayOfWeek - 1)
 
-      for (let i = 0; i < Math.min(schedule.length, sortedDays.length); i++) {
-        const slot       = schedule[i]
-        const dayName    = sortedDays[i]
-        const dayOfWeek  = DAY_TO_NUM[dayName] ?? i + 1
-        const variant    = slot.getVariant(week)
-        const blocks     = buildGymWorkoutBlocks(variant, phase)
-        const workoutDate = addDays(weekStart, dayOfWeek - 1)
+      if (slot.slotProgram === 'gym' && slot.gymSlot) {
+        // When primary is run, phaseMap has RunPhase values → map to GymPhase for secondary gym
+        const baseGymPhase: GymPhase = slot.isSecondary && programType === 'run'
+          ? runPhaseToGymPhase(runPhase)
+          : gymPhase
 
-        let duration = slot.duration
-        if (phase === 'deload') duration = Math.round(duration * 0.7)
+        // Secondary gym always uses familiarization-level intensity (low/moderate)
+        const effectivePhase: GymPhase = slot.isSecondary
+          ? (baseGymPhase === 'deload' ? 'deload' : 'familiarization')
+          : baseGymPhase
+
+        const variant = slot.gymSlot.getVariant(week)
+        const blocks  = buildGymWorkoutBlocks(variant, effectivePhase)
+
+        let duration = slot.gymSlot.duration
+        if (effectivePhase === 'deload') duration = Math.round(duration * 0.7)
+        if (slot.isSecondary) duration = Math.min(duration, 50) // cap secondary gym at 50 min
+
+        let intensity = gymIntensity(effectivePhase)
+        if (slot.isSecondary && intensity === 'high') intensity = 'moderate'
 
         workouts.push({
-          user_id:          userId,
-          scheduled_date:   toDateStr(workoutDate),
-          week_number:      week,
-          day_type:         slot.dayType,
+          user_id:              userId,
+          scheduled_date:       toDateStr(workoutDate),
+          week_number:          week,
+          day_type:             slot.gymSlot.dayType,
           blocks,
-          duration_minutes: duration,
-          intensity:        gymIntensity(phase),
-          goals_tags:       GOALS_TAGS[slot.dayType] ?? [],
-          is_rest_day:      false,
+          duration_minutes:     duration,
+          intensity,
+          goals_tags:           [
+            ...(GOALS_TAGS[slot.gymSlot.dayType] ?? []),
+            ...(slot.isSecondary ? ['supplementary'] : []),
+          ],
+          is_rest_day:          false,
+          is_secondary_program: slot.isSecondary,
+        })
+      }
+
+      if (slot.slotProgram === 'run' && slot.runSlotKey) {
+        // Secondary run: force EASY/TEMPO only (no INTERVALS, no LONG)
+        let effectiveSlot = slot.runSlotKey
+        if (slot.isSecondary && (effectiveSlot === 'INTERVALS' || effectiveSlot === 'LONG')) {
+          effectiveSlot = 'EASY'
+        }
+
+        // When primary is gym, phaseMap has GymPhase values → map to RunPhase for secondary run
+        const effectiveRunPhase: RunPhase = slot.isSecondary && programType === 'gym'
+          ? gymPhaseToRunPhase(gymPhase)
+          : runPhase
+
+        const blocks  = buildRunBlocks(effectiveSlot, week, totalWeeks, runGoal, effectiveRunPhase)
+        const dayType = RUN_SLOT_TO_DAYTYPE[effectiveSlot]
+
+        let duration = calcBlockDuration(blocks)
+        if (slot.isSecondary) duration = Math.min(duration, effectiveSlot === 'TEMPO' ? 35 : 30)
+
+        let intensity = runIntensity(effectiveSlot, effectiveRunPhase)
+        if (slot.isSecondary && intensity === 'high') intensity = 'moderate'
+
+        workouts.push({
+          user_id:              userId,
+          scheduled_date:       toDateStr(workoutDate),
+          week_number:          week,
+          day_type:             dayType,
+          blocks,
+          duration_minutes:     duration,
+          intensity,
+          goals_tags:           [
+            ...(GOALS_TAGS[dayType] ?? []),
+            ...(slot.isSecondary ? ['supplementary'] : []),
+          ],
+          is_rest_day:          false,
+          is_secondary_program: slot.isSecondary,
         })
       }
     }
   }
 
-  // ── RUN plan ─────────────────────────────────────────────────────────────
+  // ── Race day + recovery week (only when primary is run) ──────────────────
   if (programType === 'run') {
-    const runGoal = (primary as RunGoalType) || '5k'
-    const baseSlots = getRunSchedule(nDays)
-
-    for (let week = 1; week <= totalWeeks; week++) {
-      const weekStart = addDays(startDate, (week - 1) * 7)
-      const phase     = phaseMap[week] as RunPhase
-      const slots     = ensureNoConsecutiveHardDays(sortedDays, baseSlots)
-
-      for (let i = 0; i < Math.min(slots.length, sortedDays.length); i++) {
-        const slot      = slots[i]
-        const dayName   = sortedDays[i]
-        const dayOfWeek = DAY_TO_NUM[dayName] ?? i + 1
-        const blocks    = buildRunBlocks(slot, week, totalWeeks, runGoal, phase)
-        const dayType   = RUN_SLOT_TO_DAYTYPE[slot]
-        const duration  = calcBlockDuration(blocks)
-        const workoutDate = addDays(weekStart, dayOfWeek - 1)
-
-        workouts.push({
-          user_id:          userId,
-          scheduled_date:   toDateStr(workoutDate),
-          week_number:      week,
-          day_type:         dayType,
-          blocks,
-          duration_minutes: duration,
-          intensity:        runIntensity(slot, phase),
-          goals_tags:       GOALS_TAGS[dayType] ?? [],
-          is_rest_day:      false,
-        })
-      }
-    }
-
-    // ── Race day + recovery week ──────────────────────────────────────────
     const raceGoal = profile.goals
       .filter(g => g.race_date)
       .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0]
@@ -1089,20 +1354,21 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
         if (existingIdx !== -1) workouts.splice(existingIdx, 1)
 
         workouts.push({
-          user_id:          userId,
-          scheduled_date:   raceDateStr,
-          week_number:      raceWeek,
-          day_type:         'race_day',
-          blocks:           [{
+          user_id:              userId,
+          scheduled_date:       raceDateStr,
+          week_number:          raceWeek,
+          day_type:             'race_day',
+          blocks:               [{
             type:  'cardio',
             label: '¡Es el día de la carrera!',
             format: `Objetivo: ${raceGoal.type.replace(/_/g, ' ').toUpperCase()}`,
             duration_min: 120,
           }],
-          duration_minutes: 120,
-          intensity:        'high',
-          goals_tags:       ['race'],
-          is_rest_day:      false,
+          duration_minutes:     120,
+          intensity:            'high',
+          goals_tags:           ['race'],
+          is_rest_day:          false,
+          is_secondary_program: false,
         })
 
         const recoveryWeek = totalWeeks + 1
@@ -1119,24 +1385,25 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
           { offset: 7, dayType: 'rest_day',     isRest: true,  label: 'Fin de la recuperación',  format: '¿Listo para tu próximo objetivo?', duration: 0 },
         ]
 
-        for (const slot of recoverySlots) {
-          const slotDate = addDays(raceDate, slot.offset)
+        for (const rSlot of recoverySlots) {
+          const slotDate = addDays(raceDate, rSlot.offset)
           workouts.push({
-            user_id:          userId,
-            scheduled_date:   toDateStr(slotDate),
-            week_number:      recoveryWeek,
-            day_type:         slot.dayType,
-            is_rest_day:      slot.isRest,
-            duration_minutes: slot.duration,
-            intensity:        'low',
-            goals_tags:       ['recovery', raceGoal.type],
-            blocks: slot.isRest
-              ? [{ type: 'rest', label: slot.label, format: slot.format }]
+            user_id:              userId,
+            scheduled_date:       toDateStr(slotDate),
+            week_number:          recoveryWeek,
+            day_type:             rSlot.dayType,
+            is_rest_day:          rSlot.isRest,
+            duration_minutes:     rSlot.duration,
+            intensity:            'low',
+            goals_tags:           ['recovery', raceGoal.type],
+            is_secondary_program: false,
+            blocks: rSlot.isRest
+              ? [{ type: 'rest', label: rSlot.label, format: rSlot.format }]
               : [{
-                  type: slot.dayType === 'run_easy_day' ? 'cardio' : 'mobility',
-                  label: slot.label,
-                  format: slot.format,
-                  duration_min: slot.duration,
+                  type: rSlot.dayType === 'run_easy_day' ? 'cardio' : 'mobility',
+                  label: rSlot.label,
+                  format: rSlot.format,
+                  duration_min: rSlot.duration,
                 }],
           })
         }
@@ -1151,6 +1418,6 @@ export function generatePlan(userId: string, profile: PlanProfile): GeneratedPla
     }
   }
 
-  validatePlan(workouts, profile.training_days.length)
+  validatePlan(workouts, profile.training_days.length, totalActiveDays)
   return { plan, workouts }
 }

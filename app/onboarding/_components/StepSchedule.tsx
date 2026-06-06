@@ -36,6 +36,8 @@ interface Props {
 export default function StepSchedule({ data, onChange, onNext, onBack }: Props) {
   const isGym = data.program_type === 'gym'
 
+  const maxSecondaryDays = Math.max(0, 6 - data.training_days.length)
+
   function toggleDay(key: string) {
     const sel = data.training_days
     if (sel.includes(key)) {
@@ -43,7 +45,11 @@ export default function StepSchedule({ data, onChange, onNext, onBack }: Props) 
       onChange({ ...data, training_days: sel.filter(d => d !== key) })
     } else {
       if (sel.length >= 6) return // max 6
-      onChange({ ...data, training_days: [...sel, key] })
+      // Clamp secondary_program_days si el nuevo total excedería 6
+      const newPrimaryCount = sel.length + 1
+      const newMaxSecondary = Math.max(0, 6 - newPrimaryCount)
+      const clampedSecondary = Math.min(data.secondary_program_days, newMaxSecondary)
+      onChange({ ...data, training_days: [...sel, key], secondary_program_days: clampedSecondary })
     }
   }
 
@@ -113,6 +119,63 @@ export default function StepSchedule({ data, onChange, onNext, onBack }: Props) 
             {data.training_days.length} días seleccionados
           </p>
         </div>
+
+        {/* Mix & Match — solo mostrar si hay días disponibles */}
+        {maxSecondaryDays > 0 && (
+          <div>
+            <p className="text-xs text-[#888888] uppercase tracking-widest mb-1">
+              {isGym ? 'Agregar días de running' : 'Agregar días de gym'}
+            </p>
+            <p className="text-[#555555] text-[11px] mb-3">
+              {isGym
+                ? 'Easy runs para complementar tu fuerza — recuperación activa y base aeróbica'
+                : 'Full body compacto para complementar tu running — fuerza funcional sin sobrecarga'
+              }
+            </p>
+            <div className="flex gap-2">
+              {Array.from({ length: maxSecondaryDays + 1 }, (_, i) => i).map(n => {
+                const sel = data.secondary_program_days === n
+                return (
+                  <button
+                    key={n}
+                    onClick={() => onChange({ ...data, secondary_program_days: n })}
+                    className={`
+                      flex-1 py-3 rounded-xl border text-sm font-bold transition-all duration-200 active:scale-95
+                      ${sel
+                        ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
+                        : 'bg-[#141414] border-[#222222] text-[#555555] hover:border-[#3a3a3a] hover:text-[#888888]'
+                      }
+                    `}
+                  >
+                    {n === 0 ? 'No' : `${n} día${n > 1 ? 's' : ''}`}
+                  </button>
+                )
+              })}
+            </div>
+            {data.secondary_program_days > 0 && (
+              <div className="mt-3 px-4 py-3 bg-[#141414] border border-[#222222] rounded-xl">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#888888]">
+                    {isGym ? '🏋️ GYM' : '🏃 RUN'} principal
+                  </span>
+                  <span className="text-white font-bold">{data.training_days.length} días</span>
+                </div>
+                <div className="flex items-center justify-between text-xs mt-1.5">
+                  <span className="text-[#888888]">
+                    {isGym ? '🏃 RUN' : '🏋️ GYM'} complemento
+                  </span>
+                  <span className="text-[#C8FF00] font-bold">{data.secondary_program_days} días</span>
+                </div>
+                <div className="border-t border-[#222222] mt-2 pt-2 flex items-center justify-between text-xs">
+                  <span className="text-[#888888]">Total semanal</span>
+                  <span className="text-white font-bold">
+                    {data.training_days.length + data.secondary_program_days} días activos
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Equipo — solo para GYM */}
         {isGym && (

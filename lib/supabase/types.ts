@@ -44,6 +44,8 @@ export type Database = {
           current_marathon_time: string | null
           program_type: string | null
           gym_split: string | null
+          secondary_program_days: number
+          is_mixed_program: boolean
           onboarding_completed: boolean
           created_at: string
         }
@@ -65,6 +67,8 @@ export type Database = {
           current_marathon_time?: string | null
           program_type?: string | null
           gym_split?: string | null
+          secondary_program_days?: number
+          is_mixed_program?: boolean
           onboarding_completed?: boolean
           created_at?: string
         }
@@ -86,6 +90,8 @@ export type Database = {
           current_marathon_time?: string | null
           program_type?: string | null
           gym_split?: string | null
+          secondary_program_days?: number
+          is_mixed_program?: boolean
           onboarding_completed?: boolean
           created_at?: string
         }
@@ -161,6 +167,7 @@ export type Database = {
           intensity: IntensityLevel
           goals_tags: string[]
           is_rest_day: boolean
+          is_secondary_program: boolean
         }
         Insert: {
           id?: string
@@ -174,6 +181,7 @@ export type Database = {
           intensity: IntensityLevel
           goals_tags?: string[]
           is_rest_day?: boolean
+          is_secondary_program?: boolean
         }
         Update: {
           id?: string
@@ -187,6 +195,7 @@ export type Database = {
           intensity?: IntensityLevel
           goals_tags?: string[]
           is_rest_day?: boolean
+          is_secondary_program?: boolean
         }
         Relationships: []
       }

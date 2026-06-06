@@ -15,7 +15,7 @@ export async function updateTrainingDays(trainingDays: string[]) {
 
   // Load current profile data needed for plan regeneration
   const [profileRes, goalsRes] = await Promise.all([
-    supabase.from('users').select('level, equipment').eq('id', user.id).single(),
+    supabase.from('users').select('level, equipment, program_type, gym_split, secondary_program_days').eq('id', user.id).single(),
     supabase.from('goals').select('type, race_date').eq('user_id', user.id),
   ])
 
@@ -44,9 +44,12 @@ export async function updateTrainingDays(trainingDays: string[]) {
 
   // Regenerate plan
   const { plan: planData, workouts: workoutsData } = generatePlan(user.id, {
-    level:         profile?.level         ?? 'beginner',
-    training_days: trainingDays,
-    equipment:     profile?.equipment?.[0] ?? 'none',
+    level:                  profile?.level                    ?? 'beginner',
+    training_days:          trainingDays,
+    equipment:              profile?.equipment?.[0]           ?? 'none',
+    program_type:           profile?.program_type             as 'gym' | 'run' | undefined,
+    gym_split:              profile?.gym_split                as 'ppl' | 'upper_lower' | 'full_body' | undefined,
+    secondary_program_days: profile?.secondary_program_days   ?? 0,
     goals: goals.map(g => ({ type: g.type, race_date: g.race_date ?? undefined })),
   })
 
@@ -91,17 +94,19 @@ export async function regeneratePlan() {
   }
 
   const { plan: planData, workouts: workoutsData } = generatePlan(user.id, {
-    level:            profile?.level            ?? 'beginner',
-    training_days:    profile?.training_days    ?? [],
-    equipment:        profile?.equipment?.[0]   ?? 'none',
-    goals:            goals.map((g: { type: string; race_date: string | null }) => ({ type: g.type, race_date: g.race_date ?? undefined })),
-    program_type:     profile?.program_type     ?? undefined,
-    session_duration: profile?.session_duration ?? undefined,
-    injuries:         profile?.injuries         ?? [],
-    gym_goal:         profile?.gym_goal         ?? undefined,
-    priority_muscles: profile?.priority_muscles ?? [],
-    run_distance:     profile?.run_distance      ?? undefined,
-    run_weekly_km:    profile?.run_weekly_km     ?? undefined,
+    level:                  profile?.level                    ?? 'beginner',
+    training_days:          profile?.training_days            ?? [],
+    equipment:              profile?.equipment?.[0]           ?? 'none',
+    goals:                  goals.map((g: { type: string; race_date: string | null }) => ({ type: g.type, race_date: g.race_date ?? undefined })),
+    program_type:           profile?.program_type             ?? undefined,
+    gym_split:              profile?.gym_split                ?? undefined,
+    secondary_program_days: profile?.secondary_program_days   ?? 0,
+    session_duration:       profile?.session_duration         ?? undefined,
+    injuries:               profile?.injuries                 ?? [],
+    gym_goal:               profile?.gym_goal                 ?? undefined,
+    priority_muscles:       profile?.priority_muscles         ?? [],
+    run_distance:           profile?.run_distance             ?? undefined,
+    run_weekly_km:          profile?.run_weekly_km            ?? undefined,
   })
 
   const { data: newPlan, error: planErr } = await supabase

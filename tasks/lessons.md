@@ -16,3 +16,8 @@
 ## Lesson: Test edge cases with max training days
 **Context**: Fartlek slots only appear with 6 training days — the default 5-day test missed the hr_zone bug.
 **Rule**: Always test with 3, 4, 5, AND 6 training days to catch slot-specific issues.
+
+## Lesson: Phase systems are NOT interchangeable across programs
+**Context**: Mix & Match — when primary is GYM, phaseMap contains GymPhase values. Passing them to run builders (which expect RunPhase) crashes at runtime with `undefined is not iterable`.
+**Error anterior**: Secondary run workouts received GymPhase ('familiarization') instead of RunPhase ('base'), causing buildEasyRun to fail on `durationMap[phase]`.
+**Rule**: Always map phases when crossing program boundaries. Use `gymPhaseToRunPhase()` for secondary run workouts and `runPhaseToGymPhase()` for secondary gym workouts.

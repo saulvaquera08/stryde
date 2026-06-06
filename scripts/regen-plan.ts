@@ -29,10 +29,24 @@ const RUN_PROFILE = {
   run_distance:  'half_marathon',
 }
 
-const ACTIVE_PROFILE = process.argv.includes('--gym') ? GYM_PROFILE : RUN_PROFILE
+const MIX_PROFILE = {
+  level:                  'intermediate',
+  training_days:          ['monday', 'wednesday', 'saturday'],
+  equipment:              'full_gym',
+  goals:                  [{ type: 'half_marathon', race_date: '2026-10-04' }],
+  program_type:           'run' as const,
+  run_distance:           'half_marathon',
+  secondary_program_days: 3,
+}
+
+const ACTIVE_PROFILE = process.argv.includes('--gym')
+  ? GYM_PROFILE
+  : process.argv.includes('--mix')
+    ? MIX_PROFILE
+    : RUN_PROFILE
 
 async function main() {
-  const mode = process.argv.includes('--gym') ? 'GYM' : 'RUN'
+  const mode = process.argv.includes('--gym') ? 'GYM' : process.argv.includes('--mix') ? 'MIX' : 'RUN'
   console.log(`\n═══ ${mode} PLAN ═══\n`)
 
   const { plan: planData, workouts: workoutsData } = generatePlan(USER_ID, ACTIVE_PROFILE)
@@ -41,7 +55,8 @@ async function main() {
   console.log(`Start: ${planData.start_date}  End: ${planData.end_date}`)
 
   try {
-    validatePlan(workoutsData, ACTIVE_PROFILE.training_days.length)
+    const secondaryDays = (ACTIVE_PROFILE as { secondary_program_days?: number }).secondary_program_days ?? 0
+    validatePlan(workoutsData, ACTIVE_PROFILE.training_days.length, ACTIVE_PROFILE.training_days.length + secondaryDays)
     console.log(`✓ Validation passed — no issues`)
   } catch (e: any) {
     console.log(`\n⚠ Validation error: ${e.message}`)

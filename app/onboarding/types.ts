@@ -47,6 +47,9 @@ export interface OnboardingData {
   training_days: string[]
   equipment:     EquipmentType | ''
 
+  // Mix & Match — programa secundario
+  secondary_program_days: number   // 0 = sin secundario, 1-3 = días del otro programa
+
   // Step 6 — Limitaciones (opcional)
   injuries: string[]
 

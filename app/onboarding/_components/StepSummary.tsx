@@ -93,6 +93,12 @@ export default function StepSummary({ data, onBack, onSubmit, isPending }: Props
           <Row label="Nivel"  value={LEVEL_LABELS[data.level] ?? data.level} />
           {profile && <Row label="Medidas" value={profile} />}
           <Row label="Días"   value={sortedDays || '—'} />
+          {data.secondary_program_days > 0 && (
+            <Row
+              label={data.program_type === 'gym' ? '+ Running' : '+ Gym'}
+              value={`${data.secondary_program_days} día${data.secondary_program_days > 1 ? 's' : ''} complemento`}
+            />
+          )}
         </Section>
       </div>
 
